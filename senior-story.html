@@ -35,6 +35,11 @@
 
   * { box-sizing: border-box; }
 
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -49,17 +54,18 @@
   .hero {
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: space-between;
+    gap: 6vw;
+    text-align: left;
     background: var(--ink);
     color: var(--paper);
-    /* The bottom padding reserves the strip the absolutely positioned scroll cue
-       occupies (5vh up from the bottom, plus its ~70px height), plus a gap.
+    /* The bottom padding reserves the strip the two absolutely positioned
+       elements occupy: the scroll cue (5vh up from the bottom, ~70px tall) and
+       the author credit above it (~56px tall, 25px higher), plus a gap.
        Otherwise, on a short window the vertically centered headline runs down
-       into the cue. */
-    padding: 8vh 6vw calc(5vh + 110px);
+       into them. */
+    padding: 8vh 10vw calc(5vh + 200px);
   }
 
   .kicker {
@@ -88,12 +94,106 @@
     color: var(--accent);
   }
 
-  .byline {
-    margin-top: 2.5rem;
+  /* Author credit, centered above the scroll cue. Markup is the live site's
+     .entry-meta block, so the class names (byline, author, posted-on) match
+     the theme. This page doesn't load the theme, so the layout is set here:
+     avatar on the left, "by <name>" over the date on the right. The
+     --border color is used rather than --gray for the meta text, which is
+     only ~2.6:1 on slate. */
+  .entry-meta {
+    position: absolute;
+    left: 50%;
+    bottom: calc(5vh + 95px);
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.85rem;
+    align-items: center;
+    align-content: center;
     font-family: var(--font-body);
     font-size: 0.95rem;
-    /* --border rather than --gray: gray meta text is only ~2.6:1 on slate. */
+    line-height: 1.35;
     color: var(--border);
+    white-space: nowrap;
+  }
+
+  .entry-meta .avatar {
+    grid-row: 1 / span 2;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .entry-meta .byline { align-self: end; }
+  .entry-meta .posted-on { align-self: start; }
+
+  .entry-meta .author a {
+    color: var(--paper);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .entry-meta .author a:hover,
+  .entry-meta .author a:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* The theme hides the "updated" timestamp when it duplicates the published
+     one; without the theme it would print the date twice. */
+  .entry-meta time.updated { display: none; }
+
+  /* Contents guide, pinned to the right of the hero. Links are white on slate
+     (~9:1); the accent yellow is kept for the title only. */
+  .contents {
+    flex: 0 1 25rem;
+    font-family: var(--font-body);
+  }
+
+  .contents-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.7rem;
+    line-height: 1.2;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+
+  .contents ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .contents li {
+    font-size: 1.2rem;
+    line-height: 1.45;
+    margin-bottom: 0.8rem;
+  }
+
+  .contents a {
+    color: var(--paper);
+    text-decoration: underline;
+    text-decoration-color: var(--gray);
+    text-underline-offset: 0.2em;
+  }
+
+  .contents a:hover,
+  .contents a:focus-visible {
+    text-decoration-color: var(--accent);
+  }
+
+  /* Below this the two columns don't fit, so the contents drops under the
+     headline, still left-aligned. */
+  @media (max-width: 900px) {
+    .hero {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+    .contents { flex: 0 0 auto; }
   }
 
   .scroll-cue {
@@ -236,6 +336,7 @@
      step is the theme's usual tablet breakpoint, assumed rather than measured.
      The generous top margin marks a new section after the photo above it. */
   .continues h2 {
+    scroll-margin-top: 24px;
     font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1.4em;
@@ -302,6 +403,23 @@
 
 <section class="hero">
   <h1 class="headline">Costs are rising, mobility is shrinking: <em>How Cleveland seniors are feeding themselves, their neighbors and their pets</em></h1>
+  <nav class="contents" aria-label="Contents">
+    <h2 class="contents-title">Contents</h2>
+    <ul>
+      <li><a href="#snap">Why SNAP covers so little</a></li>
+      <li><a href="#insurance">The insurance “food cards” helping seniors buy groceries</a></li>
+      <li><a href="#mobility">Mobility challenges? Try home delivered meals</a></li>
+      <li><a href="#community">Neighbors who close the last mile</a></li>
+    </ul>
+  </nav>
+  <div class="entry-meta">
+    <img alt="A headshot of Celia Hack, health reporter for Signal Cleveland" src="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-120x120.jpg" srcset="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-240x240.jpg 2x" class="avatar avatar-120 photo" height="120" width="120">
+    <span class="byline">
+      <span>by</span>
+      <span class="author vcard"><a class="url fn n" href="https://signalcleveland.org/author/celiah/">Celia Hack</a></span>
+    </span><!-- .byline -->
+    <span class="posted-on"><time class="entry-date published" datetime="2026-09-28T00:04:00-04:00">September 28, 2026</time><time class="updated" datetime="2026-09-14T00:04:00-04:00">September 28, 2026</time></span>
+  </div><!-- .entry-meta -->
   <div class="scroll-cue">Scroll</div>
 </section>
 
@@ -345,11 +463,11 @@
 
   <p>Here’s what I heard.</p>
 
-  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt="">
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
     <figcaption>Anna Washington, in the black hat, plays a game with other Kingsbury tower residents about nutrition. (Mikey Indriolo/Signal Cleveland)</figcaption>
   </figure>
 
-  <h2>Seniors say SNAP is shrinking</h2>
+  <h2 id="snap">Seniors say SNAP is shrinking</h2>
 
   <p>Many of the seniors I spoke with still received SNAP benefits in spite of the new work requirements, which don’t apply to people over 65.</p>
 
@@ -375,7 +493,7 @@
     <figcaption>For Brenda Lee, dollars she got from her insurance card helped her. (Celia Hack/Signal Cleveland)</figcaption>
   </figure>
 
-  <h2>For some, insurance is stepping in</h2>
+  <h2 id="insurance">For some, insurance is stepping in</h2>
 
   <p>Instead of SNAP, seniors are relying on an unexpected source to pay for their groceries and other basic necessities: their health insurance.</p>
 
@@ -405,7 +523,7 @@
     <figcaption>Mario Esquivel in his living room as his dinner cooks in a crockpot nearby. (Celia Hack/Signal Cleveland)</figcaption>
   </figure>
 
-  <h2>The mobility challenge</h2>
+  <h2 id="mobility">The mobility challenge</h2>
 
   <p>On most nights, seventy-one-year-old Mario Esquivel heats up leftover “crockpot special” in his microwave — chicken he stewed alongside whatever veggies, beans and rice he has on hand. He even added papaya once, after his building got a free delivery of it.</p>
 
@@ -433,7 +551,7 @@
     <figcaption>Patricia Henderson Elam — a senior at University Towers — helps distribute home-delivered meals to her neighbors. (Celia Hack/Signal Cleveland)</figcaption>
   </figure>
 
-  <h2>The final mile is often closed by community</h2>
+  <h2 id="community">The final mile is often closed by community</h2>
 
   <p>A bevy of nonprofits and government programs are in place to help senior residents stock their pantries. Cleveland has dozens of food pantries. The food bank has a senior market program, which passes out fresh produce at senior centers and senior housing towers. The federal government also gives out monthly boxes of free, shelf-stable food to low-income seniors.</p>
 
