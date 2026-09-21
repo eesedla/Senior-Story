@@ -313,7 +313,7 @@
      is capped and centered with auto margins. Border-box, so the 760px cap
      leaves ~710px of text (about 70 characters a line at body size). */
   .continues {
-    min-width: 600px;
+    min-width: min(600px, 100%);
     max-width: 800px;
     margin: 0 auto;
     padding: 0 25px 20vh;
@@ -348,18 +348,26 @@
     .continues h2 { font-size: 1.8em; }
   }
 
-  /* Inline photo sits in the text column at full column width. The width and
-     height attributes on the img reserve its aspect ratio before it loads, so
-     the text below doesn't jump. */
-  .continues figure { margin: 32px 0; }
-  .continues figure img {
+  /* Inline photos break out of the text column and fill the whole screen:
+     full window width, full window height, cropped to cover. The negative left
+     margin pulls the figure back from the centered column to the window edge.
+     Only direct children of the column, so the figures nested inside the photo
+     row are left alone. The width and height attributes on the img reserve its
+     aspect ratio before it loads, so the text below doesn't jump. */
+  .continues > figure {
+    width: 100vw;
+    margin: 48px 0 48px calc(50% - 50vw);
+  }
+  .continues > figure > img {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100vh;
+    height: 100svh;
+    object-fit: cover;
   }
 
   /* Captions follow the theme's figcaption sizing (0.7em, 1.6 line height,
-     left-aligned under the photo) but are set in Inter, not the theme's
+     under the photo) but are set in Inter, not the theme's
      heading font. */
   .continues figcaption {
     font-family: var(--font-body);
@@ -369,33 +377,54 @@
     color: var(--newspack-theme-color-text-light, #515151);
     font-size: 0.7em;
     line-height: 1.6;
-    text-align: left;
+    text-align: center;
     margin-top: 8px;
+    /* The figure is window-wide, so the caption spans the same width as the
+       photo, centered, with a 25px gutter so text never touches the edge. */
+    padding: 0 25px;
   }
 
-  /* Photos side by side, uncropped. Each figure's flex-grow is its own aspect
-     ratio (--ar, set inline) and its flex-basis is 0, so the row's width is
-     shared out in proportion to width/height. That makes every photo come out
-     the same height whatever mix of landscape and portrait is in the row. */
-  .photo-row {
-    margin: 32px 0;
-    /* Breaks out of the text column: up to 1100px wide, centered on the column
-       (left 50% then pulled back half its own width), and never wider than the
-       window minus the same 25px gutters the text has. The outer figure carries
-       this so the row's single caption breaks out with the photos. */
-    position: relative;
-    left: 50%;
-    width: min(1100px, 100vw - 50px);
-    transform: translateX(-50%);
-  }
+  /* Photos side by side across the full window, edge to edge and full window
+     height, cropped to cover. Each figure's flex-grow is its own aspect ratio
+     (--ar, set inline) and its flex-basis is 0, so the width is shared out in
+     proportion to width/height: portraits get a narrow slice, the landscape a
+     wide one. The outer figure carries the full-bleed sizing from the rule
+     above so the row's single caption sits under all three photos. */
   .photo-row-images {
     display: flex;
-    gap: 8px;
+    height: 100vh;
+    height: 100svh;
   }
   .photo-row-images figure {
     flex: var(--ar) 1 0;
     min-width: 0;
     margin: 0;
+    height: 100%;
+  }
+  .photo-row-images figure img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* On a portrait window a full-height crop would keep only a sliver of each
+     landscape photo, and three across would be tiny. There the inline photos
+     keep their own proportions at full width, and the row stacks. */
+  @media (max-aspect-ratio: 1/1) {
+    .continues > figure > img {
+      height: auto;
+      object-fit: initial;
+    }
+    .photo-row-images {
+      flex-direction: column;
+      height: auto;
+    }
+    .photo-row-images figure { height: auto; }
+    .photo-row-images figure img {
+      height: auto;
+      object-fit: initial;
+    }
   }
 </style>
 </head>
