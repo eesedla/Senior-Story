@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costs are rising, mobility is shrinking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Signal brand palette. Text and the dark hero share one slate; the rest of
+       the page is white so photos and (later) white cards read against it. */
+    --slate: #404f54;
+    --teal: #23685b;
+    --teal-light: #51a89a;
+    --yellow: #f4c913;
+    --red: #d64d4d;
+    --gray: #879599;
+    --cream: #f4f0e6;
+    --border: #ccd8db;
+
+    --ink: var(--slate);
+    --paper: #fff;
+    /* Yellow, not red, is the accent on the slate hero: red on slate is only
+       ~1.8:1 contrast, yellow is ~5:1. */
+    --accent: var(--yellow);
+
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    /* Mirrors Newspack's .entry-title scale. The theme's variable doesn't cross
+       the iframe boundary, so the fallback is what actually applies embedded. */
+    --headline-size: var(--newspack-theme-font-size-xxxl, clamp(2rem, 5.5vw, 4.4rem));
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+
+  /* ---------- Hero / headline ---------- */
+
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--ink);
+    color: var(--paper);
+    /* The bottom padding reserves the strip the absolutely positioned scroll cue
+       occupies (5vh up from the bottom, plus its ~70px height), plus a gap.
+       Otherwise, on a short window the vertically centered headline runs down
+       into the cue. */
+    padding: 8vh 6vw calc(5vh + 110px);
+  }
+
+  .kicker {
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 1.75rem;
+  }
+
+  .headline {
+    font-family: var(--font-heading);
+    font-size: var(--headline-size);
+    line-height: 1.15;
+    font-weight: 700;
+    max-width: 16ch;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  /* Only Roboto Condensed Bold is loaded, so italic would be browser-faked
+     (slanted glyphs, poor spacing). Color alone carries the emphasis. */
+  .headline em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .byline {
+    margin-top: 2.5rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    /* --border rather than --gray: gray meta text is only ~2.6:1 on slate. */
+    color: var(--border);
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    color: var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .scroll-cue::after {
+    content: '';
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(var(--gray), transparent);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+
+  .hero { position: relative; }
+
+  /* ---------- Overlapping photo collage ---------- */
+
+  .collage {
+    background: var(--paper);
+    padding: 4vh 3vw 4vh;
+  }
+
+  .collage-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .collage-row figure {
+    margin: -0.7vw -1.8vw;
+    flex: 0 0 auto;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+  }
+
+  .collage-row figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* stagger every row's top edge instead of lining photos up straight across */
+  .collage-row figure:nth-child(4n+1) { transform: translateY(2.4vw); }
+  .collage-row figure:nth-child(4n+2) { transform: translateY(-1vw); }
+  .collage-row figure:nth-child(4n+3) { transform: translateY(1.2vw); }
+  .collage-row figure:nth-child(4n+4) { transform: translateY(-1.8vw); }
+
+  /* top row: widened to fill the gap left by moving the uncropped photo out */
+  .row-top figure:nth-child(1) { width: 30vw; z-index: 4; }
+  .row-top figure:nth-child(2) { width: 24vw; z-index: 2; }
+  .row-top figure:nth-child(3) { width: 28vw; z-index: 3; }
+  .row-top figure:nth-child(4) { width: 23vw; z-index: 1; }
+
+  #fig-6702 { transform: translateY(3vw); }
+  #fig-7556 { transform: translateY(1.6vw); }
+  #fig-6773 { transform: translateY(-1.8vw) translateX(2.5vw); }
+  #fig-7553 { transform: translateY(0.4vw); }
+  #fig-6733 { z-index: 10; }
+  #fig-7556-2 img { object-position: right center; }
+
+  .row-mid { margin-top: -3vw; }
+
+  .row-mid figure:nth-child(1) { width: 26vw; z-index: 4; }
+  .row-mid figure:nth-child(2) { width: 24vw; z-index: 2; }
+  .row-mid figure:nth-child(3) { width: 28vw; z-index: 3; }
+  .row-mid figure:nth-child(4) { width: 23vw; z-index: 1; }
+
+  @media (max-width: 900px) {
+    .collage { padding: 3vh 2vw 3vh; }
+
+    .collage-row figure:nth-child(4n+1),
+    .collage-row figure:nth-child(4n+2),
+    .collage-row figure:nth-child(4n+3),
+    .collage-row figure:nth-child(4n+4) {
+      transform: translateY(0);
+    }
+
+    .row-top figure:nth-child(1),
+    .row-top figure:nth-child(2),
+    .row-top figure:nth-child(3),
+    .row-top figure:nth-child(4),
+    .row-mid figure:nth-child(1),
+    .row-mid figure:nth-child(2),
+    .row-mid figure:nth-child(3),
+    .row-mid figure:nth-child(4) {
+      width: 42vw;
+      margin: -1.2vw -3vw;
+    }
+
+    #fig-6702 { transform: translateY(1.5vw); }
+    #fig-7556 { transform: translateY(0.8vw); }
+    #fig-6773 { transform: translateX(4vw); }
+  }
+
+  /* ---------- Space for the rest of the scroll ---------- */
+
+  /* Text column: 25px inline gutters on phones, and from 640px up the same box
+     is capped and centered with auto margins. Border-box, so the 760px cap
+     leaves ~710px of text (about 70 characters a line at body size). */
+  .continues {
+    min-width: 600px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 25px 20vh;
+    /* Matches the body copy on a regular signalcleveland.org story. The Newspack
+       theme sets html to 18px (20px from 600px up) and line-height 1.6, and
+       paragraphs inherit both. The theme's variables don't cross the iframe
+       boundary, so the values are repeated here. */
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  @media (min-width: 600px) {
+    .continues { font-size: 20px; }
+  }
+
+  .continues p:first-of-type { margin-top: 50px; }
+
+  /* Subheads mirror the theme's h2 in story content: Roboto Condensed Bold,
+     1.2 line height, 1.4em stepping up to 1.8em on wider screens. The 782px
+     step is the theme's usual tablet breakpoint, assumed rather than measured.
+     The generous top margin marks a new section after the photo above it. */
+  .continues h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.4em;
+    line-height: 1.2;
+    margin: 48px 0 16px;
+  }
+
+  @media (min-width: 782px) {
+    .continues h2 { font-size: 1.8em; }
+  }
+
+  /* Inline photo sits in the text column at full column width. The width and
+     height attributes on the img reserve its aspect ratio before it loads, so
+     the text below doesn't jump. */
+  .continues figure { margin: 32px 0; }
+  .continues figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Captions follow the theme's figcaption sizing (0.7em, 1.6 line height,
+     left-aligned under the photo) but are set in Inter, not the theme's
+     heading font. */
+  .continues figcaption {
+    font-family: var(--font-body);
+    /* #515151 is the theme variable's value. The variable itself isn't defined
+       inside the iframe, so without the fallback the color would silently drop
+       back to the body slate. */
+    color: var(--newspack-theme-color-text-light, #515151);
+    font-size: 0.7em;
+    line-height: 1.6;
+    text-align: left;
+    margin-top: 8px;
+  }
+
+  /* Photos side by side, uncropped. Each figure's flex-grow is its own aspect
+     ratio (--ar, set inline) and its flex-basis is 0, so the row's width is
+     shared out in proportion to width/height. That makes every photo come out
+     the same height whatever mix of landscape and portrait is in the row. */
+  .photo-row {
+    margin: 32px 0;
+    /* Breaks out of the text column: up to 1100px wide, centered on the column
+       (left 50% then pulled back half its own width), and never wider than the
+       window minus the same 25px gutters the text has. The outer figure carries
+       this so the row's single caption breaks out with the photos. */
+    position: relative;
+    left: 50%;
+    width: min(1100px, 100vw - 50px);
+    transform: translateX(-50%);
+  }
+  .photo-row-images {
+    display: flex;
+    gap: 8px;
+  }
+  .photo-row-images figure {
+    flex: var(--ar) 1 0;
+    min-width: 0;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <h1 class="headline">Costs are rising, mobility is shrinking: <em>How Cleveland seniors are feeding themselves, their neighbors and their pets</em></h1>
+  <div class="scroll-cue">Scroll</div>
+</section>
+
+<div class="collage">
+  <div class="collage-row row-top">
+    <figure id="fig-6702"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6879-scaled.jpg" alt=""></figure>
+    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7578-scaled.jpg" alt=""></figure>
+    <figure id="fig-7556"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6734-scaled.jpg" alt=""></figure>
+    <figure id="fig-7553"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" alt=""></figure>
+  </div>
+  <div class="collage-row row-mid">
+    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6725-scaled.jpg" alt=""></figure>
+    <figure id="fig-6733"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6733-scaled.jpg" alt=""></figure>
+    <figure id="fig-7556-2"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7556-copy-2-scaled.jpg" alt=""></figure>
+    <figure id="fig-6773"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6773-scaled.jpg" alt=""></figure>
+  </div>
+</div>
+
+<div class="continues">
+  <p>Mary Kennedy wheeled a small cart overflowing with paper grocery bags up to her apartment building.</p>
+
+  <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at 89th and Hough.</p>
+
+  <p>But she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs, greeting her as she arrived.</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-scaled.jpg" width="2560" height="1838" alt="">
+    <figcaption>As Mary Kennedy approaches her apartment building, the nearby cats run toward her. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <p>On top of sharing food, she helps residents in the low-income, senior apartment building sign up for transportation services to get to the grocery store or food bank. She tries to organize trips among residents so no one has to go alone.</p>
+
+  <p>“I wouldn't turn a person down that needs help,” she said.</p>
+
+  <p>Across Cleveland, more and more seniors do need help. As grocery prices rise and the county’s population ages, the Greater Cleveland Food Bank saw demand among people over 60 grow 45% between 2019 and 2025, more steeply than adults and kids in the same time period.</p>
+
+  <p>“Many of our older adults are living on fixed income. So if they only have so much resource in a month, yet their living expenses are increasing, we see older adults having to make really tough choices,” said Jess Morgan, the chief programs officer at the Greater Cleveland Food Bank.</p>
+
+  <p>Meanwhile, older adults — aged 55 to 64 — are some of the most likely to lose SNAP benefits under a new set of work rules handed down by Trump administration. And county cuts locally are reducing the number of home-delivered meals seniors can get each week.</p>
+
+  <p>I spoke with more than a dozen seniors around Cuyahoga County, many of whom live at Kennedy’s Kingsbury Tower in Cleveland, about the obstacles and solutions to putting food in their fridge and on their plate. For many, the shrinking safety net means informal networks like Kennedy’s are increasingly important — as are the remaining services and resources that exist.</p>
+
+  <p>Here’s what I heard.</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt="">
+    <figcaption>Anna Washington, in the black hat, plays a game with other Kingsbury tower residents about nutrition. (Mikey Indriolo/Signal Cleveland)</figcaption>
+  </figure>
+
+  <h2>Seniors say SNAP is shrinking</h2>
+
+  <p>Many of the seniors I spoke with still received SNAP benefits in spite of the new work requirements, which don’t apply to people over 65.</p>
+
+  <p>But they had their own issues with the program: Namely, that it paid for barely a fraction of their grocery bill. The federal government estimates it costs women over 70 about $260 a month to feed themselves on the thriftiest possible budget. But eighty-six-year-old Mabel Messam gets $21 a month. Seventy-one-year-old Mary Morris gets $50 a month. Anna Washington, who is over 65 but declined to share her specific age, gets $26 a month — enough for a “loaf of bread and milk,” she joked.</p>
+
+  <p>Nikki Williams, the social service coordinator for Kingsbury Towers, helps residents at the building sign up for SNAP. But many turn her down, daunted by the required paperwork and frustrated with the small allotments.</p>
+
+  <p>“They don’t even want to go through it for the $23,” Williams said. “They’re like, it’s not even worth the headache.”</p>
+
+  <p>SNAP benefits are calculated through an opaque system that accounts for residents’ income, household size, savings and monthly rent and utility costs. Higher incomes, smaller families and smaller rent payments typically equate to a smaller SNAP allotment. The program also assumes residents will hew to the cheapest possible food budget and that residents will spend 30% of their own income on groceries.</p>
+
+  <p>Still, the women I spoke to said the measly amount of assistance they receive feels far from the reality that beef costs nearly $7 a pound.</p>
+
+  <p>“I don’t eat a lot of meats no more. I eat fruits, vegetables, salads, stuff like that,” Washington said. “Grapes and oranges. I may eat some meat one time a week, maybe twice a week.”</p>
+
+  <p>The most frustrating part for many was that they used to receive more dollars. In the last couple of years, Seventy-seven-year-old Valeria Ray remembers getting $100 a month in SNAP. Now, she receives $24 a month. She’s not sure why it’s shrunk, given the cost of groceries.</p>
+
+  <p>It may be because of the expiration of COVID-era benefits, said Emily Campbell, the president and chief executive officer for the Center for Community Solutions, which temporarily beefed up the amount residents received to spend on food. Those expired in March 2023, resulting in the average person in the U.S. receiving about $90 a month less in SNAP benefits.</p>
+
+  <p>The steepest drop was for older adults at the minimum benefit level, who saw their monthly benefits drop from $281 to $23, according to the Food Research and Action Center.</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
+    <figcaption>For Brenda Lee, dollars she got from her insurance card helped her. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <h2>For some, insurance is stepping in</h2>
+
+  <p>Instead of SNAP, seniors are relying on an unexpected source to pay for their groceries and other basic necessities: their health insurance.</p>
+
+  <p>At least seven seniors told me that they get more than a hundred dollars each month from CareSource or United HealthCare or another insurance company — money that can go toward groceries, rent and utilities. It typically comes in the mail on a preloaded card.</p>
+
+  <p>“That’s what helps them get by,” said Nikki Williams, the social service coordinator for Kingsbury Towers.</p>
+
+  <p>The benefit recently saved seventy-three-year-old Brenda Lee after her SNAP card declined at the grocery store. She believes the county canceled her SNAP benefits because she couldn’t get recertified, a process to confirm residents’ income and household size hasn’t changed. Lee said she called the county’s eligibility center to complete her interview, a key step to maintain the benefits, but never got through to a worker.</p>
+
+  <p>So she used her card from insurance at the grocery store, instead. She gets about $200 a month. Spending it at the grocery store meant she could stock her fridge. That’s important to her because she likes to eat healthy meals — salmon patties, grits and shrimp, baked chicken.</p>
+
+  <p>“I’m a diabetic, and I don’t want to eat something that’s going to make me sick,” Lee said.</p>
+
+  <p>But it put her in a tricky spot with her other bills. She typically uses the insurance card to pay for electricity, gas, water and sewer utilities.</p>
+
+  <p>Another senior, Mary Morris, also said her “food card” from insurance keeps her afloat each month. A few years ago, she received more than $200 in SNAP benefits. Now, they’ve dwindled down to $50. So she started going to the food pantry and relied heavily on donated groceries from her apartment complex.</p>
+
+  <p>Then, she found out about a benefit through her Medicare Advantage plan: $392 a month. She still goes to the food pantry but is now typically able to put it off until the end of the month. By that time, her stamps and the dollars from insurance are used up.</p>
+
+  <p>The challenge? To get these dollars, residents need the right kind of insurance. Their income often has to be low enough to qualify for Medicaid, and they must simultaneously be enrolled in a Medicare plan, which is for people over 65.</p>
+
+  <p>On top of that, many insurance plans require customers to have a certain medical condition — like diabetes – in order to qualify for the money or to be able to spend it on items like food.</p>
+
+  <p><strong>(Read more about how to access ‘food’ cards if you’re 65)</strong></p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt="">
+    <figcaption>Mario Esquivel in his living room as his dinner cooks in a crockpot nearby. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <h2>The mobility challenge</h2>
+
+  <p>On most nights, seventy-one-year-old Mario Esquivel heats up leftover “crockpot special” in his microwave — chicken he stewed alongside whatever veggies, beans and rice he has on hand. He even added papaya once, after his building got a free delivery of it.</p>
+
+  <p>Esquivel spent years working as a chef but was laid off after COVID. After that, he got back surgery. He can still walk, but he typically uses a rollator to get around. The crockpot is his solution.</p>
+
+  <p>“If I put it in a crock pot, I'm not over the stove all day,” Esquivel said.</p>
+
+  <p>For some seniors, the ability to physically shop for and cook food is nearly as tough as rising prices. Home-delivered meals are the silver bullet to eliminate most of these challenges — a “blessing,” said seventy-year-old Ann Ferguson, who receives them from St. Martin de Porres Family Center. She lives by herself and doesn’t cook much anymore. She is still mobile, but her hands are “not functioning like they used to” after working as a seamstress for over forty years, she said.</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
+    <figcaption>Michael Beasley at Wade Oval park. He’s still able to get around, but home-delivered meals make life tremendously simpler. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <p>Sixty-seven-year-old Michael Beasley, who uses a walker, also relies on them. While he is able to get to the grocery store on the bus, the meals mean he doesn’t have to worry about it so consistently. On a summer Wednesday, he planned to reheat a Salisbury steak meal for dinner.</p>
+
+  <p>“It’s fast. It’s quick. I pop it in the microwave,” Beasley said. “I’m getting the vegetables — potatoes. And it’s portioned the way doctors want portions to be portioned.”</p>
+
+  <p>St. Martin de Porres is able to deliver meals as part of a federally-funded program organized by the Western Reserve Area Agency on Aging (WRAAA). It’s free — though they accept donations — and there’s no income limit, said Joey Tomsick, the WRAAA’s director of the program development and planning department.</p>
+
+  <p>Instead, the local providers that pass out the meals — like senior centers or departments on aging — visit residents to assess whether they are physically in need of meal assistance. Some providers have a waitlist, though, Tomsick said. Funding isn’t the only limiting factor. Volunteers can be, too, he said.</p>
+
+  <p>Other agencies that offer affordable meal deliveries are also seeing demand outstrip supply. Cuyahoga County has a program to deliver meals to seniors who don’t qualify for SNAP or Medicaid for as low as $5 a month. The number of meals they’re able to pass out shrank drastically this year as local cuts took effect: they formerly handed out ten to 15 meals a week. Now, they’re offering five meals a week. At the same time, several hundred people are on the wait list to join the program, said Natasha Pietrocola, the director of Cuyahoga County’s Division of Senior and Adult Services.</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
+    <figcaption>Patricia Henderson Elam — a senior at University Towers — helps distribute home-delivered meals to her neighbors. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <h2>The final mile is often closed by community</h2>
+
+  <p>A bevy of nonprofits and government programs are in place to help senior residents stock their pantries. Cleveland has dozens of food pantries. The food bank has a senior market program, which passes out fresh produce at senior centers and senior housing towers. The federal government also gives out monthly boxes of free, shelf-stable food to low-income seniors.</p>
+
+  <p>For many seniors, though, family members, neighbors and social service workers close the final mile between these programs and their mouths. Staff like Williams help coordinate the drop-off of food boxes and produce from the food bank at Kingsbury. After it arrives, Leonard Marshall, a resident, helps deliver the food boxes door-to-door.</p>
+
+  <p>“That way they don’t gotta come down,” he said. “Cause a lot of ladies is on the walkers.”</p>
+
+  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7597-scaled.jpg" width="2560" height="1708" alt="">
+    <figcaption>Leonard Marshall delivers food boxes to seniors throughout Kingsbury Tower.</figcaption>
+  </figure>
+
+  <p>Henderson Elam lives at University Towers and volunteers to coordinate the distribution of home-delivered meals from St. Martin de Porres Family Center to neighbors in the building. She sets up a table on the first floor, calling the 23 residents who are signed up to come down the elevator to pick up the bags. She’s able to shuffle the meals around according to her neighbors’ tastes, so that less food will be wasted. For example, some residents like milk, and others hate it. She saves the milk from the ones likely to throw it away and shares it with those who will drink it.</p>
+
+  <p>Early on, she thought about quitting, but an older gentleman discouraged her from doing so.</p>
+
+  <p>“He said, ‘Miss Pat, honestly, if you don't do it, I won't eat,’” Henderson Elam said.</p>
+
+  <figure class="photo-row">
+    <div class="photo-row-images">
+      <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6710-scaled.jpg" width="1708" height="2560" alt=""></figure>
+      <figure style="--ar: 1.499"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
+      <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6716-2-scaled.jpg" width="1708" height="2560" alt=""></figure>
+    </div>
+    <figcaption>Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser. (Celia Hack/Signal Cleveland)</figcaption>
+  </figure>
+
+  <p>Other residents – like Rita Harris and Victoria Williams at Kingsbury – simply cook and share hot meals. One Friday in August, the two friends grilled ribs that they planned to sell at a fundraiser for the tenant council Saturday night. The money helps them host a ‘soup kitchen’ a couple times a month, where they make soup to give away to their neighbors. They take it door-to-door because some residents who are blind or can’t cook for other reasons don’t leave their rooms.</p>
+
+  <p>These informal networks are not utopian solutions, especially in environments of scarcity. I saw that neighbors putting in extra work sometimes felt underappreciated and overburdened. Kennedy often feels frustrated that she, a seventy-four-year-old living barely above the poverty level herself, is a primary resource her neighbors turn to. She laments how many don’t take her up on offers to try using senior transportation, and who ask her to grab them food instead of going themselves.</p>
+
+  <p>Williams — the social service coordinator at Kingsbury — arranged one Friday for a nearby recreation center handing out free produce to drop it off at the apartment tower. That would prevent elderly seniors in wheelchairs from having to make the trek. As Williams wheeled a container full of watermelon into the building, she started taking the names of residents’ who wanted one. But neighbors quickly began fighting with each other and Williams about who would get a watermelon, worried they might miss out on the opportunity for fresh produce.</p>
+
+  <!-- Continue drafting the rest of the scroll below. -->
+</div>
+
+</body>
+</html>
