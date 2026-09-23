@@ -229,8 +229,9 @@
 
   /* ---------- Overlapping photo collage ---------- */
 
+  /* The collage sits on the same turquoise as the rail below it. */
   .collage {
-    background: var(--paper);
+    background: var(--hero-bg);
     padding: 4vh 3vw 4vh;
   }
 
@@ -323,17 +324,17 @@
     color: var(--ink);
   }
 
-  /* Near-full-screen rounded card. 92vw wide with a 4vw photo-colored margin
-     either side, and at least 90vh tall so a short run of copy still fills the
+  /* Near-full-screen rounded card. 90vw wide with a 5vw strip of turquoise
+     either side, and at least 86vh tall so a short run of copy still fills the
      screen; a longer run grows the card and scrolls past like page content.
      The copy inside is held to a readable line length and centered, since
      ~1300px lines would be unreadable. The cards' 24px radius is the one
      departure from the square cards on the John Williams piece. */
   .card {
-    width: 92vw;
-    min-height: 90vh;
-    min-height: 90svh;
-    margin: 5vh auto;
+    width: 90vw;
+    min-height: 86vh;
+    min-height: 86svh;
+    margin: 6vh auto;
     padding: clamp(32px, 6vw, 96px) clamp(24px, 4vw, 64px);
     background: var(--paper);
     border-radius: 24px;
@@ -371,21 +372,23 @@
     .card h2 { font-size: 1.8em; }
   }
 
-  /* Photos fill the whole screen: full width of the turquoise rail, full window
-     height, cropped to cover. The width and height attributes on the img
+  /* Photos are the same width as the cards and a little shorter than the
+     window, with the same rounded corners, so a strip of turquoise shows around
+     each one. Cropped to cover. The width and height attributes on the img
      reserve its aspect ratio before it loads, so the cards below don't jump.
      Only direct children of the rail, so the figures nested inside the photo
      row are left alone. */
   .continues > figure {
-    width: 100%;
-    margin: 5vh 0;
+    width: 90vw;
+    margin: 6vh auto;
   }
   .continues > figure > img {
     display: block;
     width: 100%;
-    height: 100vh;
-    height: 100svh;
+    height: 84vh;
+    height: 84svh;
     object-fit: cover;
+    border-radius: 24px;
   }
 
   /* Captions sit on the turquoise, so they're white (~4.9:1) rather than the
@@ -402,16 +405,18 @@
     padding: 0 25px;
   }
 
-  /* Photos side by side across the full window, edge to edge and full window
-     height, cropped to cover. Each figure's flex-grow is its own aspect ratio
+  /* Photos side by side at the same width as the cards, rounded as one
+     block, cropped to cover. Each figure's flex-grow is its own aspect ratio
      (--ar, set inline) and its flex-basis is 0, so the width is shared out in
      proportion to width/height: portraits get a narrow slice, the landscape a
      wide one. The outer figure carries the full-bleed sizing from the rule
      above so the row's single caption sits under all three photos. */
   .photo-row-images {
     display: flex;
-    height: 100vh;
-    height: 100svh;
+    height: 84vh;
+    height: 84svh;
+    overflow: hidden;
+    border-radius: 24px;
   }
   .photo-row-images figure {
     flex: var(--ar) 1 0;
