@@ -352,6 +352,38 @@
     margin-right: auto;
   }
 
+  /* Transparent cutout photos that sit inside a card's copy, centered and capped
+     so a ~700px source isn't stretched. */
+  .card > img.cutout {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    margin-top: 0.4em;
+    margin-bottom: 1.6em;
+  }
+
+  /* Regular (non-cutout) photo inside a card: square-cornered and a bit
+     narrower than the copy, centered, with its caption underneath. The figure
+     carries the width cap and spacing so the caption lines up with the photo. */
+  .card > figure.card-figure {
+    max-width: 560px;
+    margin-top: 0.4em;
+    margin-bottom: 1.6em;
+  }
+  .card-figure img.card-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* The rail's captions are white for the turquoise; inside a white card they
+     take the theme's caption gray (#515151), and no side gutter since the
+     figure is already inset. */
+  .card .card-figure figcaption {
+    color: var(--newspack-theme-color-text-light, #515151);
+    padding: 0;
+  }
+
   .card p { margin-top: 0; margin-bottom: 1.1em; }
   .card > :last-child { margin-bottom: 0; }
 
@@ -496,16 +528,17 @@
   <div class="card">
     <p>Mary Kennedy wheeled a small cart overflowing with paper grocery bags up to her apartment building.</p>
 
+    <figure class="card-figure">
+      <img class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-scaled.jpg" width="2560" height="1838" alt="Mary Kennedy approaches her apartment building as nearby cats run toward her.">
+      <figcaption>As Mary Kennedy approaches her apartment building, the nearby cats run toward her. (Celia Hack/Signal Cleveland)</figcaption>
+    </figure>
+
     <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at 89th and Hough.</p>
 
     <p>But she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs, greeting her as she arrived.</p>
-  </div>
 
-  <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-scaled.jpg" width="2560" height="1838" alt="">
-    <figcaption>As Mary Kennedy approaches her apartment building, the nearby cats run toward her. (Celia Hack/Signal Cleveland)</figcaption>
-  </figure>
+    <img class="cutout" src="mary-cat-2.png" width="689" height="533" alt="Mary Kennedy bends down to pet two black cats.">
 
-  <div class="card">
     <p>On top of sharing food, she helps residents in the low-income, senior apartment building sign up for transportation services to get to the grocery store or food bank. She tries to organize trips among residents so no one has to go alone.</p>
 
     <p>“I wouldn't turn a person down that needs help,” she said.</p>
