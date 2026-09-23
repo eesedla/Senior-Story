@@ -47,7 +47,10 @@
     background: var(--paper);
     color: var(--ink);
     font-family: var(--font-body);
+    /* clip, not hidden: hidden turns body into a scroll container, which
+       stops the rail's sticky photos from sticking. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* ---------- Hero / headline ---------- */
@@ -414,6 +417,24 @@
     width: 90vw;
     margin: 6vh auto;
   }
+
+  /* Each standalone photo sticks to the rail once it's centered and the next
+     card scrolls up over it, so the gaps between cards show the photo behind.
+     Later photos sit on top of earlier ones (DOM order); the turquoise
+     background plus a shadow dropped below it hides the earlier photo's
+     caption when the new caption is shorter. Cards ride above on z-index. */
+  .continues > figure {
+    position: sticky;
+    top: 8vh;
+    top: 8svh;
+    z-index: 0;
+    background: var(--hero-bg);
+    box-shadow: 0 30vh 0 var(--hero-bg);
+  }
+  .card {
+    position: relative;
+    z-index: 1;
+  }
   .continues > figure > img {
     display: block;
     width: 100%;
@@ -477,6 +498,8 @@
       height: auto;
     }
     .photo-row-images figure { height: auto; }
+    /* Stacked, the row is taller than the window, so it scrolls normally. */
+    .continues > figure.photo-row { position: static; box-shadow: none; }
     .photo-row-images figure img {
       height: auto;
       object-fit: initial;
@@ -538,7 +561,9 @@
     <p>But she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs, greeting her as she arrived.</p>
 
     <img class="cutout" src="mary-cat-2.png" width="689" height="533" alt="Mary Kennedy bends down to pet two black cats.">
+  </div>
 
+  <div class="card">
     <p>On top of sharing food, she helps residents in the low-income, senior apartment building sign up for transportation services to get to the grocery store or food bank. She tries to organize trips among residents so no one has to go alone.</p>
 
     <p>“I wouldn't turn a person down that needs help,” she said.</p>
