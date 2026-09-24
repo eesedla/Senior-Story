@@ -19,13 +19,13 @@
     --gray: #879599;
     --cream: #f4f0e6;
     --border: #ccd8db;
-    --hero-bg: #388164;
+    --hero-bg: #b1ca77;
 
     --ink: var(--slate);
     --paper: #fff;
-    /* Yellow, not red, is the accent on the slate hero: red on slate is only
-       ~1.8:1 contrast, yellow is ~5:1. */
-    --accent: var(--yellow);
+    /* Teal is the accent on the light green #b1ca77 hero (~3.6:1, used only
+       on large type); yellow there is far too faint. */
+    --accent: var(--teal);
 
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-heading: 'Roboto Condensed', 'Arial Narrow', sans-serif;
@@ -63,7 +63,7 @@
     gap: 6vw;
     text-align: left;
     background: var(--hero-bg);
-    color: var(--paper);
+    color: var(--ink);
     /* The bottom padding reserves the strip the two absolutely positioned
        elements occupy: the scroll cue (5vh up from the bottom, ~70px tall) and
        the author credit above it (~56px tall, 25px higher), plus a gap.
@@ -101,9 +101,9 @@
   /* Author credit, centered above the scroll cue. Markup is the live site's
      .entry-meta block, so the class names (byline, author, posted-on) match
      the theme. This page doesn't load the theme, so the layout is set here:
-     avatar on the left, "by <name>" over the date on the right. The
-     --border color is used rather than --gray for the meta text, which is
-     only ~2.6:1 on slate. */
+     avatar on the left, "by <name>" over the date on the right. The meta
+     text is slate ink, since --gray is only ~1.7:1 on the light
+     background. */
   .entry-meta {
     position: absolute;
     left: 50%;
@@ -118,7 +118,7 @@
     font-family: var(--font-body);
     font-size: 0.95rem;
     line-height: 1.35;
-    color: var(--border);
+    color: var(--ink);
     white-space: nowrap;
   }
 
@@ -135,7 +135,7 @@
   .entry-meta .posted-on { align-self: start; }
 
   .entry-meta .author a {
-    color: var(--paper);
+    color: var(--ink);
     font-weight: 600;
     text-decoration: none;
   }
@@ -149,8 +149,8 @@
      one; without the theme it would print the date twice. */
   .entry-meta time.updated { display: none; }
 
-  /* Contents guide, pinned to the right of the hero. Links are white on slate
-     (~9:1); the accent yellow is kept for the title only. */
+  /* Contents guide, pinned to the right of the hero. Links are slate ink on the
+     light background (~4.7:1); the teal accent is kept for the title only. */
   .contents {
     flex: 0 1 25rem;
     font-family: var(--font-body);
@@ -177,7 +177,7 @@
   }
 
   .contents a {
-    color: var(--paper);
+    color: var(--ink);
     text-decoration: underline;
     text-decoration-color: var(--gray);
     text-underline-offset: 0.2em;
@@ -208,7 +208,7 @@
     font-family: var(--font-body);
     font-size: 0.85rem;
     letter-spacing: 0.02em;
-    color: var(--border);
+    color: var(--ink);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -408,8 +408,10 @@
 
   /* Photos are a bit narrower than the cards and shorter than the window,
      square-cornered, so a wide strip of turquoise shows around each one.
-     Cropped to cover. The width and height attributes on the img
-     reserve its aspect ratio before it loads, so the cards below don't jump.
+     Standalone photos keep their original crop: each is scaled down to fit
+     inside that 80vw x 74vh box and centered, never cropped. The width and
+     height attributes on the img reserve its aspect ratio before it loads,
+     so the cards below don't jump.
      Only a .pin's own photo, so the figures nested inside the photo
      row are left alone. */
   .pin > figure {
@@ -446,19 +448,92 @@
   }
   .pin > figure > img {
     display: block;
-    width: 100%;
-    height: 74vh;
-    height: 74svh;
-    object-fit: cover;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 74vh;
+    max-height: 74svh;
+    margin: 0 auto;
   }
 
-  /* Captions sit on the turquoise, so they're white (~4.9:1) rather than the
+  /* A photo with its caption set as label graphics instead of a
+     figcaption: a .label-top to the left, level with the photo's top, and a
+     .label-bottom to the right, level with its bottom. Each label overlaps the
+     photo's side slightly and sits on top of it. The group is centered in
+     the photo box; each label's text is in its alt. */
+  .pin > figure.photo-with-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+  .pin > figure.photo-with-label > img {
+    margin: 0;
+    min-width: 0;
+  }
+  .pin > figure.photo-with-label > img.label {
+    flex: 0 1 auto;
+    width: clamp(200px, 24vw, 380px);
+  }
+  .pin > figure.photo-with-label > img.label {
+    position: relative;
+    z-index: 1;
+  }
+  .pin > figure.photo-with-label > img.label-top {
+    align-self: flex-start;
+    margin-right: -2.5vw;
+    /* Nudged down and further onto the photo without moving the others. */
+    transform: translate(1.5vw, 4vh);
+  }
+  .pin > figure.photo-with-label > img.label-bottom {
+    align-self: flex-end;
+    margin-left: -2.5vw;
+    /* Nudged up and further onto the photo, mirroring the first label. */
+    transform: translate(-1.5vw, -4vh);
+  }
+  /* Left side, level with the photo's bottom: nudged up and onto the photo. */
+  .pin > figure.photo-with-label > img.label-bottom-left {
+    align-self: flex-end;
+    margin-right: -2.5vw;
+    transform: translate(1.5vw, -4vh);
+  }
+  /* Right side, level with the photo's top: nudged down and onto the photo. */
+  .pin > figure.photo-with-label > img.label-top-right {
+    align-self: flex-start;
+    margin-left: -2.5vw;
+    transform: translate(-1.5vw, 4vh);
+  }
+
+  /* A column on the photo's right, overlapping it like a .label-bottom: a
+     label level with the photo's top (nudged down and onto the photo like
+     a .label-top) and a cutout image under it at the bottom. */
+  .pin > figure.photo-with-label > .label-stack {
+    flex: 0 1 auto;
+    align-self: stretch;
+    width: clamp(200px, 24vw, 380px);
+    margin-left: -2.5vw;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .label-stack > img {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+  .label-stack > img.label { transform: translate(-1.5vw, 7vh); }
+  .label-stack > img.cutout { transform: translate(-1.5vw, -4vh); }
+
+  /* Captions sit on the turquoise, so they take the slate ink (~4.7:1 on #b1ca77) rather than the
      theme's gray. Sizing follows the theme's figcaption (0.7em, 1.6 line
      height) but is set in Inter. Centered and as wide as the photo, with a 25px
      gutter so text never touches the edge. */
   .continues figcaption {
     font-family: var(--font-body);
-    color: var(--paper);
+    color: var(--ink);
     font-size: 0.7em;
     line-height: 1.6;
     text-align: center;
@@ -471,12 +546,24 @@
      (--ar, set inline) and its flex-basis is 0, so the width is shared out in
      proportion to width/height: portraits get a narrow slice, the landscape a
      wide one. The outer figure carries the full-bleed sizing from the rule
-     above so the row's single caption sits under all three photos. */
+     above; the row's label graphic sits centered above it, overlapping the
+     top of the middle photo. */
   .photo-row-images {
     display: flex;
     height: 74vh;
     height: 74svh;
     overflow: hidden;
+  }
+  .photo-row > img.row-label {
+    display: block;
+    position: relative;
+    z-index: 1;
+    /* Also capped by window height so the pinned row plus label fits on a
+       short screen. */
+    width: min(clamp(200px, 24vw, 380px), 40vh);
+    height: auto;
+    margin: 0 auto -9vh;
+    margin-bottom: -9svh;
   }
   .photo-row-images figure {
     flex: var(--ar) 1 0;
@@ -496,10 +583,6 @@
      keep their own proportions at full width, and the row stacks. */
   @media (max-aspect-ratio: 1/1) {
     .card { min-height: 0; }
-    .pin > figure > img {
-      height: auto;
-      object-fit: initial;
-    }
     .photo-row-images {
       flex-direction: column;
       height: auto;
@@ -512,6 +595,22 @@
     .pin > figure,
     .pin > .card { margin-top: 6vh; }
     .pin > figure.photo-row { position: static; }
+    /* Stack label, photo, label, keeping the group within a screen. The
+       first label hangs left and the second right, echoing the desktop. */
+    .pin > figure.photo-with-label { flex-direction: column; gap: 12px; }
+    .pin > figure.photo-with-label > img.photo { max-height: 50vh; max-height: 50svh; align-self: center; }
+    .pin > figure.photo-with-label > img.label { width: min(70vw, 420px); margin: 0; transform: none; }
+    .pin > figure.photo-with-label > img.label-top-right { align-self: flex-end; }
+    .pin > figure.photo-with-label > img.label-bottom-left { align-self: flex-start; order: 1; }
+    .pin > figure.photo-with-label > .label-stack {
+      align-self: flex-end;
+      width: min(70vw, 420px);
+      margin: 0;
+      gap: 12px;
+    }
+    .label-stack > img.label,
+    .label-stack > img.cutout { transform: none; }
+    .label-stack > img.cutout { width: 60%; align-self: flex-end; }
     .photo-row-images figure img {
       height: auto;
       object-fit: initial;
@@ -526,10 +625,11 @@
   <nav class="contents" aria-label="Contents">
     <h2 class="contents-title">Contents</h2>
     <ul>
-      <li><a href="#snap">Why SNAP covers so little</a></li>
-      <li><a href="#insurance">The insurance “food cards” helping seniors buy groceries</a></li>
-      <li><a href="#mobility">Mobility challenges? Try home delivered meals</a></li>
-      <li><a href="#community">Neighbors who close the last mile</a></li>
+      <li><a href="#work-rules">Older adults are losing SNAP under new work rules</a></li>
+      <li><a href="#snap">Some seniors say their SNAP benefits are shrinking</a></li>
+      <li><a href="#insurance">Insurance “food cards” are helping seniors buy groceries</a></li>
+      <li><a href="#mobility">Residents with mobility challenges are getting creative</a></li>
+      <li><a href="#community">Neighbors often close the last mile</a></li>
     </ul>
   </nav>
   <div class="entry-meta">
@@ -590,8 +690,43 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
-      <figcaption>Anna Washington, in the black hat, plays a game with other Kingsbury tower residents about nutrition. (Mikey Indriolo/Signal Cleveland)</figcaption>
+    <figure class="photo-with-label">
+      <img class="label label-top" src="catherine%20label.svg" width="781" height="431" alt="Sixty-four-year-old Catherine Gainey temporarily lost her SNAP benefits earlier this year due to new work requirements for the program.">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7708-scaled.jpg" width="1708" height="2560" alt="">
+      <img class="label label-bottom" src="catherine%20label%202.svg" width="781" height="286" alt="Now, she volunteers 20 hours a week at Trinity Cathedral downtown to keep her benefits.">
+    </figure>
+
+    <div class="card" id="work-rules">
+      <h2>Older adults losing SNAP benefits under new work rules</h2>
+
+      <p>Sixty-four-year-old Catherine Gainey was one of nearly 14,000 Cuyahoga County residents who lost SNAP benefits in the past year.</p>
+
+      <p>Two years ago, she retired after working as a chef. The $248 she received from the SNAP program helped keep her pantry full. This spring, though, her food assistance was cut, like thousands of others in her age range.</p>
+
+      <p>“So I got real smart,” Gainey said. She read the paperwork the county sent her and called their office. She realized that new rules required her to work, volunteer or go to school.</p>
+
+      <p>Gainey plotted what to do next. In order to get her small retirement check, she couldn’t work many hours each month — so a part-time job was out. She walked over to the Sterling library near her apartment in the Central neighborhood to ask about volunteer opportunities. Staff there shared a couple options, including the food bank’s community resource center on Cleveland’s East Side. For Gainey, that would require an hour-long ride, with transfers, by public transit.</p>
+
+      <p>“I can’t even get no food stamps. How am I going to catch the bus every day?” Gainey said.</p>
+
+      <p>The library also suggested calling Trinity Cathedral, a church within walking distance of her. That’s where Gainey found a solution to get her benefits back. After hearing her plight, church leaders offered her an opportunity. She could volunteer there, cleaning, watering plants, doing laundry and helping serve free hot meals to the public. At first, Gainey worked on a trial basis. After a couple weeks, the church invited her to stay on longer-term.</p>
+
+      <p>The arrangement was new for staff at Trinity Cathedral, who typically deal with volunteers that come in once a month or week for a couple hours. Gainey needed 20 hours a week. The church had to assign Gainey a supervisor and find work that fit both her skillset and their needs, said Eric Travis, who works as the church’s associate for congregational ministry. They also needed to set a schedule that would work for all parties, ultimately landing on weekday mornings for three hours a day and several hours on Sunday.</p>
+
+      <p>They worked it out for Gainey. But it’s not a large-scale solution, Travis said.</p>
+
+      <p>“It is feasible, but only for a single person. We could not support a number of people,” Travis said. Nonprofits that operate on a broader scale — like the food bank — might be more equipped to take on more volunteers, they said.</p>
+
+      <p>Gainey doesn’t mind the work. She likes staying active and spending time in the century-old chapel, with its stained glass windows and intricate stone carvings. The biggest pain point is the paperwork. Every month, she walks to the county’s Department of Job and Family Services building on Payne Avenue with the sheet of paper confirming her volunteer hours. There, she scans it in to make sure they won’t cut off her benefits again.</p>
+
+      <p>That’s more frequent than is required. But she and Travis are being extra careful, so that her food stamps won’t “have a chance to unintentionally lapse,” Travis said. She just has four more months to go. At the end of January, she’ll turn 65, and the work requirement will no longer apply to her. She’ll keep volunteering, if the church will let her, Gainey said.</p>
+    </div>
+  </div>
+
+  <div class="pin">
+    <figure class="photo-with-label">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
+      <img class="label label-bottom" src="anna%20label.svg" width="792" height="336" alt="Anna Washington, in the black hat, plays a game with other Kingsbury tower residents about nutrition.">
     </figure>
 
     <div class="card" id="snap">
@@ -620,8 +755,9 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
-      <figcaption>For Brenda Lee, dollars she got from her insurance card helped her. (Celia Hack/Signal Cleveland)</figcaption>
+    <figure class="photo-with-label">
+      <img class="label label-top" src="brenda%20label.svg" width="801" height="279" alt="For Brenda Lee, dollars she got from her insurance card helped her afford this month’s groceries.">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
     <div class="card" id="insurance">
@@ -654,8 +790,12 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt="">
-      <figcaption>Mario Esquivel in his living room as his dinner cooks in a crockpot nearby. (Celia Hack/Signal Cleveland)</figcaption>
+    <figure class="photo-with-label">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt="">
+      <div class="label-stack">
+        <img class="label" src="mario%20label.svg" width="763" height="279" alt="Mario Esquivel in his living room as his dinner cooks in a crockpot nearby.">
+        <img class="cutout" src="crockpot.png" width="1861" height="1430" alt="Mario Esquivel’s crockpot, filled with stewed chicken and vegetables.">
+      </div>
     </figure>
 
     <div class="card" id="mobility">
@@ -672,8 +812,9 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
-      <figcaption>Michael Beasley at Wade Oval park. He’s still able to get around, but home-delivered meals make life tremendously simpler. (Celia Hack/Signal Cleveland)</figcaption>
+    <figure class="photo-with-label">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
+      <img class="label label-top-right" src="michael%20label.svg" width="706" height="417" alt="Michael Beasley at Wade Oval park. He’s still able to get around, but home-delivered meals make life tremendously simpler.">
     </figure>
 
     <div class="card">
@@ -690,8 +831,9 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
-      <figcaption>Patricia Henderson Elam — a senior at University Towers — helps distribute home-delivered meals to her neighbors. (Celia Hack/Signal Cleveland)</figcaption>
+    <figure class="photo-with-label">
+      <img class="label label-bottom-left" src="patricia%20label.svg" width="714" height="372" alt="Patricia Henderson Elam — a senior at University Towers — helps distribute home-delivered meals to her neighbors.">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
     <div class="card" id="community">
@@ -706,8 +848,9 @@
   </div>
 
   <div class="pin">
-    <figure><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7597-scaled.jpg" width="2560" height="1708" alt="">
-      <figcaption>Leonard Marshall delivers food boxes to seniors throughout Kingsbury Tower.</figcaption>
+    <figure class="photo-with-label">
+      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7597-scaled.jpg" width="2560" height="1708" alt="">
+      <img class="label label-top-right" src="leonard%20label.svg" width="763" height="279" alt="Leonard Marshall delivers food boxes to seniors throughout Kingsbury Tower.">
     </figure>
 
     <div class="card">
@@ -721,12 +864,12 @@
 
   <div class="pin">
     <figure class="photo-row">
+      <img class="label row-label" src="grill%20label.svg" width="689" height="316" alt="Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser.">
       <div class="photo-row-images">
         <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6710-scaled.jpg" width="1708" height="2560" alt=""></figure>
         <figure style="--ar: 1.499"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
         <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6716-2-scaled.jpg" width="1708" height="2560" alt=""></figure>
       </div>
-      <figcaption>Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser. (Celia Hack/Signal Cleveland)</figcaption>
     </figure>
 
     <div class="card">
