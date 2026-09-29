@@ -969,8 +969,8 @@
     }
     .photo-row.stack-mobile .photo-row-images {
       flex-direction: column;
-      height: 62vh;
-      height: 62svh;
+      height: 70vh;
+      height: 70svh;
       flex: 0 1 auto;
       min-height: 0;
     }
@@ -1061,6 +1061,57 @@
       object-fit: cover;
       object-position: var(--crop-x, 50%) center;
     }
+  }
+
+  /* Desktop: with large text, captions wrap rather than squeezing their
+     photo. Beside a photo each can take up to 36% of the photo area; over
+     a photo, up to 45% of the photo's width. At the default text size
+     every caption is narrower than this, so nothing changes there. */
+  @media (min-aspect-ratio: 1/1) {
+    .pin > figure.photo-with-label .label { max-width: 36%; }
+    .framed .frame .label { max-width: 45%; }
+  }
+
+  /* ---------- Photo breaks that don't fit ---------- */
+
+  /* A small script (end of page) checks each photo break: if its captions
+     and photos can't fit behind a card without the photos shrinking more
+     than about 40% (large text, heavy zoom, a very short screen), it marks
+     the break .flow. A flowed break drops out of the pinned rail: it sits
+     in the normal page flow between the two cards, the gap grows to its
+     full height, and it scrolls past like any image, so nothing is cropped
+     or cut off. While measuring, it's laid out the same way with .measuring.
+     Without the script, every break keeps the pinned behavior. */
+  .pin.flow > figure,
+  .pin.measuring > figure {
+    position: relative;
+    top: auto;
+    height: auto;
+    margin-top: 6vh;
+    margin-bottom: 0;
+  }
+  .pin.flow > .card { margin-top: 6vh; }
+  .pin.flow[id] { scroll-margin-top: 2vh; }
+  /* Photos at their natural size: no squeezing to fit a box. */
+  .pin.flow > figure img.photo,
+  .pin.measuring > figure img.photo,
+  .pin.flow > figure .frame,
+  .pin.measuring > figure .frame,
+  .pin.flow .photo-row-images,
+  .pin.measuring .photo-row-images { flex-shrink: 0; }
+  /* Phones: stacked photo strips have no box to share out, so each takes
+     a landscape shape of its own. */
+  @media (max-aspect-ratio: 1/1) {
+    .pin.flow .photo-row.stack-mobile .photo-row-images,
+    .pin.measuring .photo-row.stack-mobile .photo-row-images { height: auto; }
+    .pin.flow .photo-row.stack-mobile .photo-row-images figure,
+    .pin.measuring .photo-row.stack-mobile .photo-row-images figure {
+      flex: none;
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+    .pin.flow .photo-row.label-between,
+    .pin.measuring .photo-row.label-between { padding: 0; }
   }
 </style>
 </head>
@@ -1350,5 +1401,58 @@
   <!-- Continue drafting the rest of the scroll below. -->
 </div>
 
+
+<script>
+/* Photo breaks that don't fit (see the CSS note above .pin.flow). A break
+   fits if its photos and captions fit in the height a card can hide (86%
+   of the screen) and, on phones, if everything but its photos plus at
+   least 60% of its photos' natural height does too. Rechecked when the
+   window, zoom or text size changes. */
+(function () {
+  var pins = [].slice.call(document.querySelectorAll('.pin'));
+  if (!pins.length) return;
+  function check() {
+    var limit = window.innerHeight * 0.86;
+    pins.forEach(function (pin) {
+      var fig = pin.querySelector(':scope > figure');
+      if (!fig) return;
+      pin.classList.remove('flow');
+      /* Any size: flow if the photos and captions, as laid out now
+         (including captions nudged past the photo), run taller than a card
+         can cover. */
+      var top = Infinity, bottom = -Infinity;
+      fig.querySelectorAll('img, .label, .card-label').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.height) { top = Math.min(top, r.top); bottom = Math.max(bottom, r.bottom); }
+      });
+      if (bottom - top > limit) { pin.classList.add('flow'); return; }
+      /* Phones, where photos shrink to make room: also flow if they'd have
+         to shrink by more than about 40%. */
+      pin.classList.add('measuring');
+      var total = fig.scrollHeight;
+      var photos = 0;
+      fig.querySelectorAll('img.photo, .photo-row-images > figure').forEach(function (el) {
+        photos += el.getBoundingClientRect().height;
+      });
+      pin.classList.remove('measuring');
+      if (total - 0.4 * photos > limit) pin.classList.add('flow');
+    });
+  }
+  var queued = false;
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; check(); });
+  }
+  window.addEventListener('load', check);
+  window.addEventListener('resize', queue);
+  /* Text-size changes resize the captions without resizing the window. */
+  if ('ResizeObserver' in window) {
+    var ro = new ResizeObserver(queue);
+    document.querySelectorAll('.label, .card-label').forEach(function (el) { ro.observe(el); });
+  }
+  check();
+})();
+</script>
 </body>
 </html>
