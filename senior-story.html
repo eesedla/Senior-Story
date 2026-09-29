@@ -27,6 +27,12 @@
        on large type); yellow there is far too faint. */
     --accent: var(--teal);
 
+    /* Every label graphic is drawn at the same fraction of its original
+       size (set per image as --w, its native width), so the text inside
+       them all comes out the same size: 45% on desktop, about 21px text,
+       shrinking in step below a 1400px-wide window. */
+    --label-k: min(0.45px, 0.0321vw);
+
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-heading: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     /* Mirrors Newspack's .entry-title scale. The theme's variable doesn't cross
@@ -152,7 +158,9 @@
   /* Contents guide, pinned to the right of the hero. Links are slate ink on the
      light background (~4.7:1); the teal accent is kept for the title only. */
   .contents {
-    flex: 0 1 31rem;
+    /* Held to at least 24rem so the item text doesn't get squeezed into a
+       narrow column beside the picture slot. */
+    flex: 0 0 clamp(24rem, 36vw, 31rem);
     font-family: var(--font-body);
   }
 
@@ -171,10 +179,13 @@
     list-style: none;
   }
 
+  /* Every row is the same height (the picture slot's), so the items sit
+     evenly spaced whatever their line count. */
   .contents li {
-    font-size: 1.35rem;
-    line-height: 1.35;
-    margin-bottom: 0.9rem;
+    font-size: clamp(1.2rem, 0.5rem + 1.25vw, 1.5rem);
+    line-height: 1.3;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
   }
 
   /* Each row is one link: a picture slot on the left, the text on the right.
@@ -200,7 +211,7 @@
 
   .toc-mark {
     position: relative;
-    height: 5.75rem;
+    height: 6rem;
   }
 
   .toc-arrow {
@@ -240,10 +251,10 @@
   .toc-faces.pair img + img { margin-left: -12%; }
   .toc-faces.pair img:first-child { position: relative; z-index: 1; }
   /* Stacked pair: a portrait on top and a wide group shot under it at the
-     full slot width, overlapping its shoulders. This row's slot is taller
-     to fit both. */
-  .contents li:has(.toc-faces.stack) .toc-mark { height: 8rem; }
+     full slot width, overlapping its shoulders. It spills a little above
+     and below the slot rather than making this row taller than the rest. */
   .toc-faces.stack {
+    inset: -1rem 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -276,21 +287,87 @@
     text-decoration-color: var(--accent);
   }
 
+  /* Touch screens have no hover, so there the cutouts simply are the
+     bullets: shown from the start, no arrow, no animation. */
+  @media (hover: none) {
+    .toc-arrow { display: none; }
+    .toc-faces {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .contents a:hover .toc-faces,
+    .contents a:focus-visible .toc-faces { transition: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .toc-arrow,
     .toc-faces { transition: opacity 0.2s ease; transform: none !important; }
   }
 
-  /* Below this the two columns don't fit, so the contents drops under the
-     headline, still left-aligned. */
+  /* The headline, byline and scroll cue share a wrapper. On desktop it's
+     just the left column: the byline and cue are positioned against .hero,
+     since the wrapper isn't positioned there. */
+  .hero-lead { flex: 0 1 auto; min-width: 0; }
+
+  /* Below this the two columns don't fit. The hero becomes two full
+     screens: the headline, filling the first, with the byline under it and
+     the scroll cue at the bottom; then the contents menu filling the
+     second, its rows spread evenly down the screen. */
   @media (max-width: 900px) {
     .hero {
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 2.5rem;
+      display: block;
+      min-height: 0;
+      padding: 0;
     }
-    .contents { flex: 0 0 auto; }
+    .hero-lead {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8svh 7vw calc(5svh + 90px);
+    }
+    .headline {
+      font-size: clamp(2.5rem, 12.5vw, 4.4rem);
+      line-height: 1.08;
+      max-width: none;
+      text-align: center;
+    }
+    .entry-meta {
+      position: static;
+      transform: none;
+      align-self: center;
+      margin-top: 2.25rem;
+    }
+    .contents {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8svh 7vw;
+    }
+    .contents-title { font-size: 2.4rem; }
+    /* A teal arrow after "Jump to", like the menu's desktop bullets. The
+       empty alt text keeps screen readers from announcing it. */
+    .contents-title::after {
+      content: "→";
+      content: "→" / "";
+      margin-left: 0.35em;
+      font-family: var(--font-body);
+      font-weight: 400;
+    }
+    .contents ul {
+      flex: 1 1 auto;
+      max-height: 44rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+    }
+    .contents li { margin: 0; }
+    .contents a { grid-template-columns: 6rem 1fr; column-gap: 0.9rem; }
   }
 
   .scroll-cue {
@@ -378,31 +455,29 @@
   .row-mid figure:nth-child(3) { width: 28vw; z-index: 3; }
   .row-mid figure:nth-child(4) { width: 23vw; z-index: 1; }
 
+  /* Two photos across, each 54vw with a -2vw margin, so a pair spans the
+     full width and bleeds just past both edges. The left photo of each
+     pair drops and the right one rises, and the pairs overlap vertically,
+     so they read as a staggered stack rather than a grid. */
   @media (max-width: 900px) {
-    .collage { padding: 3vh 2vw 3vh; }
+    .collage { padding: 5vw 0 7vw; }
+    .row-mid { margin-top: 0; }
 
-    .collage-row figure:nth-child(4n+1),
-    .collage-row figure:nth-child(4n+2),
-    .collage-row figure:nth-child(4n+3),
-    .collage-row figure:nth-child(4n+4) {
-      transform: translateY(0);
+    .row-top figure:nth-child(n),
+    .row-mid figure:nth-child(n) {
+      width: 54vw;
+      margin: -4vw -2vw;
     }
 
-    .row-top figure:nth-child(1),
-    .row-top figure:nth-child(2),
-    .row-top figure:nth-child(3),
-    .row-top figure:nth-child(4),
-    .row-mid figure:nth-child(1),
-    .row-mid figure:nth-child(2),
-    .row-mid figure:nth-child(3),
-    .row-mid figure:nth-child(4) {
-      width: 42vw;
-      margin: -1.2vw -3vw;
-    }
+    .collage-row figure:nth-child(odd) { transform: translateY(5vw); }
+    .collage-row figure:nth-child(even) { transform: translateY(-3vw); }
+    .collage-row figure:nth-child(4n+1) { transform: translateY(6vw); }
+    .collage-row figure:nth-child(4n+4) { transform: translateY(-5vw); }
 
-    #fig-6702 { transform: translateY(1.5vw); }
-    #fig-7556 { transform: translateY(0.8vw); }
-    #fig-6773 { transform: translateX(4vw); }
+    #fig-6702 { transform: translateY(7vw); }
+    #fig-7556 { transform: translateY(4vw); }
+    #fig-6773 { transform: translateY(-4vw); }
+    #fig-7553 { transform: translateY(-2vw); }
   }
 
   /* ---------- Space for the rest of the scroll ---------- */
@@ -480,6 +555,96 @@
   }
 
   .card p { margin-top: 0; margin-bottom: 1.1em; }
+
+  /* An in-card photo whose caption is a label graphic: on desktop the label
+     overlaps the photo's top-left corner; on phones it sits right below. */
+  .card-figure.has-label { position: relative; }
+  .card > figure.card-figure.has-label { margin-top: 2.2rem; }
+  .card-figure .card-label {
+    position: absolute;
+    top: -1.5rem;
+    left: -2.5rem;
+    width: calc(var(--w) * var(--label-k));
+    height: auto;
+  }
+  /* Desktop nudge for one label: further up and left off the corner, with
+     extra room above its photo so it clears the paragraph before. */
+  .card-figure .card-label-nudge { transform: translate(-1.5rem, -1.25rem); }
+  .card > figure.card-figure.label-room {
+    max-width: 620px;
+    margin-top: 4.25rem;
+    transform: translateX(2.5rem);
+  }
+  /* Desktop: a wider figure with the photo shifted down and right inside
+     it, so the photo is larger and the corner label covers less of it. */
+  .card > figure.card-figure.label-offset { max-width: 700px; }
+  .card-figure.label-offset > img.card-photo {
+    width: calc(100% - 5rem);
+    margin: 2.5rem 0 0 5rem;
+  }
+  @media (max-width: 600px) {
+    /* Centered on the photo even when a wide label runs past the copy
+       column into the card's side padding. */
+    .card-figure .card-label {
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      display: block;
+      width: calc(var(--w) * var(--label-k));
+      margin: 12px 0 0;
+    }
+    .card > figure.card-figure.has-label { margin-top: 0.4em; }
+    .card-figure .card-label-nudge { transform: translateX(-50%); }
+    .card > figure.card-figure.label-room { max-width: 560px; transform: none; }
+    .card > figure.card-figure.label-offset { max-width: 560px; }
+    .card-figure.label-offset > img.card-photo { width: 100%; margin: 0; }
+  }
+
+  /* A cutout floated right with the copy wrapping around it. Cards are flex
+     columns, where floats don't work, so the cutout and the paragraphs that
+     wrap it share a normal block. The wrap follows the cutout's own outline
+     (its transparency, set per image as an inline shape-outside) where the
+     browser can read the image; otherwise it wraps the rectangle. */
+  .card > .wrap-text { display: flow-root; }
+  .float-cutout {
+    float: right;
+    width: min(42%, 300px);
+    height: auto;
+    /* The negative right margin nudges it past the text column's edge into
+       the card's side padding, capped so it never reaches the card edge. */
+    margin: 0.2em calc(-1 * min(2.5rem, 4vw)) 0.8em 1.2em;
+    shape-image-threshold: 0.3;
+    shape-margin: 0.6em;
+  }
+
+  /* On phones a wrap leaves only a few words per line, so the cutout sits
+     on its own between paragraphs instead, larger and centered. */
+  @media (max-width: 600px) {
+    .float-cutout {
+      float: none;
+      display: block;
+      width: 78%;
+      margin: 0.4em auto 1.4em;
+      shape-outside: none !important;
+    }
+  }
+
+  /* Note card: a callout inside a card's copy, in the Signal cream with the
+     accent-yellow rule down its left edge. */
+  .card > aside.note {
+    margin-top: 0.4em;
+    margin-bottom: 1.6em;
+    padding: 1.1em 1.3em;
+    background: var(--cream);
+    border-left: 6px solid var(--yellow);
+    font-weight: 600;
+  }
+  .card > aside.note p { margin: 0; }
+  .card > aside.note a {
+    color: var(--teal);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
   .card > :last-child { margin-bottom: 0; }
 
   /* Subheads mirror the theme's h2 in story content: Roboto Condensed Bold,
@@ -574,7 +739,7 @@
   }
   .pin > figure.photo-with-label > img.label {
     flex: 0 1 auto;
-    width: clamp(200px, 24vw, 380px);
+    width: calc(var(--w) * var(--label-k));
   }
   .pin > figure.photo-with-label > img.label {
     position: relative;
@@ -598,6 +763,13 @@
     margin-right: -2.5vw;
     transform: translate(1.5vw, -4vh);
   }
+  /* Desktop tweak for a left-label group that fills the width: pad the
+     right side so the photo sits nearer the center, and slide the label
+     a little further onto the photo. */
+  .pin > figure.photo-with-label.pull-center { padding-right: 7vw; }
+  .pin > figure.photo-with-label.pull-center > img.label-top {
+    transform: translate(3.5vw, 4vh);
+  }
   /* Right side, level with the photo's top: nudged down and onto the photo. */
   .pin > figure.photo-with-label > img.label-top-right {
     align-self: flex-start;
@@ -605,28 +777,41 @@
     transform: translate(-1.5vw, 4vh);
   }
 
-  /* A column on the photo's right, overlapping it like a .label-bottom: a
-     label level with the photo's top (nudged down and onto the photo like
-     a .label-top) and a cutout image under it at the bottom. */
-  .pin > figure.photo-with-label > .label-stack {
-    flex: 0 1 auto;
-    align-self: stretch;
-    width: clamp(200px, 24vw, 380px);
-    margin-left: -2.5vw;
-    position: relative;
-    z-index: 1;
+
+  /* A photo with labels placed against its own edges: .frame shrinks to
+     the photo's size, so a label can straddle the center of its top edge
+     or its bottom-right corner. */
+  .pin > figure.framed {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
   }
-  .label-stack > img {
+  .framed .frame { position: relative; }
+  .framed .frame > img.photo {
     display: block;
-    width: 100%;
+    width: auto;
     height: auto;
-    min-height: 0;
+    max-width: 80vw;
+    max-height: 74vh;
+    max-height: 74svh;
   }
-  .label-stack > img.label { transform: translate(-1.5vw, 7vh); }
-  .label-stack > img.cutout { transform: translate(-1.5vw, -4vh); }
+  .framed .frame > img.label {
+    position: absolute;
+    z-index: 1;
+    width: calc(var(--w) * var(--label-k));
+    height: auto;
+  }
+  .framed .frame-top {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -30%);
+  }
+  .framed .frame-bottom-right {
+    /* Hangs off the right edge but stays inside the bottom edge, so it's
+       carried off behind the next card with the photo. */
+    right: 0;
+    bottom: 0;
+    transform: translate(35%, -8%);
+  }
 
   /* Captions sit on the turquoise, so they take the slate ink (~4.7:1 on #b1ca77) rather than the
      theme's gray. Sizing follows the theme's figcaption (0.7em, 1.6 line
@@ -661,10 +846,19 @@
     z-index: 1;
     /* Also capped by window height so the pinned row plus label fits on a
        short screen. */
-    width: min(clamp(200px, 24vw, 380px), 40vh);
+    width: calc(var(--w) * var(--label-k));
+    max-width: 45vh;
     height: auto;
     margin: 0 auto -9vh;
     margin-bottom: -9svh;
+  }
+  /* Shifted left of center on desktop; centered again on phones. */
+  .photo-row > img.row-label-left {
+    transform: translateX(-14vw);
+    /* A larger label, so it overlaps further to keep the group short
+       enough to hide behind an 86vh card. */
+    margin-bottom: -15vh;
+    margin-bottom: -15svh;
   }
   .photo-row-images figure {
     flex: var(--ar) 1 0;
@@ -682,41 +876,146 @@
   /* On a portrait window a full-height crop would keep only a sliver of each
      landscape photo, and three across would be tiny. There the inline photos
      keep their own proportions at full width, and the row stacks. */
+  /* Portrait windows (phones) use the same rail as desktop: cards keep their
+     86vh minimum, so each photo can wait pinned behind the card before it
+     and be revealed as that card scrolls away. Photos here are much shorter
+     than the window, so the next card is pushed further down to give the
+     revealed photo a moment on its own before it rolls over it. */
   @media (max-aspect-ratio: 1/1) {
-    .card { min-height: 0; }
-    .photo-row-images {
+    /* Phones: one label scale for every label, as large as the widest
+       one (the 924px garden label) allows while still fitting across a
+       card: about 36% of original size on a 390px phone. It depends only on
+       the screen width, so labels stay the same size on short phones too;
+       there the photos give up space instead (see below). */
+    :root { --label-k: min(0.45px, 0.0925vw); }
+    /* Each photo break is a box exactly as tall as the cards' 86vh minimum,
+       pinned 7vh from the top, so the box sits centered on the screen and
+       its photos and labels are centered inside it. Being no taller than a
+       card, it still hides completely behind the cards on either side. */
+    .pin > figure {
+      top: 7vh;
+      top: 7svh;
+      height: 86vh;
+      height: 86svh;
+      margin-bottom: 0;
+      width: 90vw;
+      display: flex;
       flex-direction: column;
-      height: auto;
+      justify-content: center;
     }
-    .photo-row-images figure { height: auto; }
-    /* Stacked, the row is taller than the window, so it scrolls normally. */
-    /* Cards have no minimum height here, so a pulled-up photo could poke
-       out above a short one. Photos sit in the normal flow instead and pin
-       as they arrive. */
-    .pin > figure,
-    .pin > .card { margin-top: 6vh; }
-    .pin > figure.photo-row { position: static; }
-    /* No pull-up here, so land with the photo at its pinned spot. */
-    .pin[id] { scroll-margin-top: 10vh; scroll-margin-top: 10svh; }
-    /* Stack label, photo, label, keeping the group within a screen. The
-       first label hangs left and the second right, echoing the desktop. */
+    /* The next card starts a screen below the box, so a revealed photo has
+       the gap to itself before the card rolls over it. */
+    .pin > .card {
+      margin-top: 100vh;
+      margin-top: 100svh;
+    }
+    /* Photo rows stay side by side (a stack of three would be taller than
+       the screen and couldn't pin), at a height a phone can show whole. */
+    .photo-row-images {
+      height: 46vh;
+      height: 46svh;
+    }
+    /* Mario's row stacks instead: three full-width strips sharing a block
+       short enough to pin in the gap and hide behind an 86vh card. */
+    /* Less overlap on phones, so the label sits higher on the stack. */
+    .photo-row > img.row-label-left {
+      transform: none;
+      margin-bottom: -5vh;
+      margin-bottom: -5svh;
+    }
+    .photo-row.stack-mobile .photo-row-images {
+      flex-direction: column;
+      height: 62vh;
+      height: 62svh;
+      flex: 0 1 auto;
+      min-height: 0;
+    }
+    .photo-row.stack-mobile .photo-row-images figure {
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+    }
+    /* The grill stack puts its label between the photos, as its own block
+       after the first photo: the photo wrapper steps aside (display:
+       contents) so the label and photos can be ordered in one column. */
+    .photo-row.label-between {
+      padding: 3vh 0;
+      padding: 3svh 0;
+    }
+    .photo-row.label-between .photo-row-images { display: contents; }
+    .photo-row.label-between .photo-row-images figure {
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+      order: 3;
+    }
+    .photo-row.label-between .photo-row-images figure:first-child { order: 1; }
+    .photo-row.label-between > img.row-label-mid {
+      order: 2;
+      align-self: center;
+      margin: 10px 0;
+      max-width: none;
+      flex: none;
+    }
+    /* Stack label, photo, label, keeping the group well within a screen
+       so it stays hidden behind an 86vh card. The first label hangs left
+       and the second right, echoing the desktop. */
     .pin > figure.photo-with-label { flex-direction: column; gap: 12px; }
-    .pin > figure.photo-with-label > img.photo { max-height: 50vh; max-height: 50svh; align-self: center; }
-    .pin > figure.photo-with-label > img.label { width: min(70vw, 420px); margin: 0; transform: none; }
+    /* Labels never shrink or cap on phones, so every one stays at the
+       shared scale. */
+    .pin > figure img.label { flex-shrink: 0; max-width: none; }
+    /* Photos are the flexible part of each group: they shrink (cropping
+       to cover) whenever labels and photo together would outgrow the box. */
+    .pin > figure.photo-with-label > img.photo {
+      max-height: 44vh;
+      max-height: 44svh;
+      align-self: center;
+      flex: 0 1 auto;
+      min-height: 0;
+      object-fit: cover;
+    }
+    .pin > figure.photo-with-label > img.label { margin: 0; transform: none; }
+    .pin > figure.photo-with-label.pull-center { padding-right: 0; }
+    .pin > figure.photo-with-label.pull-center > img.label-top { transform: none; align-self: center; }
+    .pin > figure.photo-with-label > img.label.label-center-mobile { align-self: center; }
+    .pin > figure.photo-with-label > img.label-above-mobile { order: -1; }
     .pin > figure.photo-with-label > img.label-top-right { align-self: flex-end; }
     .pin > figure.photo-with-label > img.label-bottom-left { align-self: flex-start; order: 1; }
-    .pin > figure.photo-with-label > .label-stack {
-      align-self: flex-end;
-      width: min(70vw, 420px);
-      margin: 0;
+    /* Framed photo: labels stack above and below, the first to the left,
+       the photo centered and the second to the right. */
+    .framed .frame {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
-    .label-stack > img.label,
-    .label-stack > img.cutout { transform: none; }
-    .label-stack > img.cutout { width: 60%; align-self: flex-end; }
-    .photo-row-images figure img {
+    .framed .frame > img.label {
+      position: static;
+      transform: none;
+      width: calc(var(--w) * var(--label-k));
+    }
+    .framed .frame-top { align-self: flex-start; }
+    .framed .frame { flex: 0 1 auto; min-height: 0; }
+    .framed .frame > img.photo {
+      align-self: center;
+      max-width: 100%;
+      max-height: 42vh;
+      max-height: 42svh;
+      flex: 0 1 auto;
+      min-height: 0;
+      object-fit: cover;
+    }
+    .framed .frame-bottom-right { align-self: flex-end; }
+    /* Landscape photos in the gaps crop to a square on phones, so they
+       fill the width taller and the subject reads bigger. --crop-x, set
+       per photo, is where the crop sits: 0% keeps the left edge (trims
+       only the right), 50% trims evenly, higher values trim more left. */
+    .pin > figure img.photo.crop-mobile {
+      width: 100%;
       height: auto;
-      object-fit: initial;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      object-position: var(--crop-x, 50%) center;
     }
   }
 </style>
@@ -724,26 +1023,28 @@
 <body>
 
 <section class="hero">
-  <h1 class="headline">Costs are rising, mobility is shrinking: <em>How Cleveland seniors are feeding themselves, their neighbors and their pets</em></h1>
+  <div class="hero-lead">
+    <h1 class="headline">Costs are rising, mobility is shrinking: <em>How Cleveland seniors are feeding themselves, their neighbors and their pets</em></h1>
+    <div class="entry-meta">
+      <img alt="A headshot of Celia Hack, health reporter for Signal Cleveland" src="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-120x120.jpg" srcset="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-240x240.jpg 2x" class="avatar avatar-120 photo" height="120" width="120">
+      <span class="byline">
+        <span>by</span>
+        <span class="author vcard"><a class="url fn n" href="https://signalcleveland.org/author/celiah/">Celia Hack</a></span>
+      </span><!-- .byline -->
+      <span class="posted-on"><time class="entry-date published" datetime="2026-09-28T00:04:00-04:00">September 28, 2026</time><time class="updated" datetime="2026-09-14T00:04:00-04:00">September 28, 2026</time></span>
+    </div><!-- .entry-meta -->
+    <div class="scroll-cue">Scroll</div>
+  </div>
   <nav class="contents" aria-label="Contents">
     <h2 class="contents-title">Jump to</h2>
     <ul>
-      <li><a href="#work-rules"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="catherine%20contents.png" alt=""></span></span><span class="toc-text">Older adults are losing SNAP under new work rules</span></a></li>
-      <li><a href="#snap"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="anna%20contents.png" alt=""></span></span><span class="toc-text">Some seniors say their SNAP benefits are shrinking</span></a></li>
-      <li><a href="#insurance"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="brenda%20contents.png" alt=""></span></span><span class="toc-text">Insurance “food cards” are helping seniors buy groceries</span></a></li>
+      <li><a href="#work-rules"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="catherine%20contents.png" alt=""></span></span><span class="toc-text">Older adults are losing SNAP under new rules</span></a></li>
+      <li><a href="#snap"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="anna%20contents.png" alt=""></span></span><span class="toc-text">Is SNAP shrinking?</span></a></li>
+      <li><a href="#insurance"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="brenda%20contents.png" alt=""></span></span><span class="toc-text">These insurance “food cards” are helping seniors buy groceries</span></a></li>
       <li><a href="#mobility"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces pair"><img src="mario%20contents.png" alt=""><img src="michael%20contents.png" alt=""></span></span><span class="toc-text">Residents with mobility challenges are getting creative</span></a></li>
       <li><a href="#community"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces stack"><img src="patricia%20contents.png" alt=""><img src="leonard%20and%20friends%20contents.png" alt=""></span></span><span class="toc-text">Neighbors often close the last mile</span></a></li>
     </ul>
   </nav>
-  <div class="entry-meta">
-    <img alt="A headshot of Celia Hack, health reporter for Signal Cleveland" src="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-120x120.jpg" srcset="https://signalcleveland.org/wp-content/uploads/2025/04/cropped-IMG_4864-scaled-1-240x240.jpg 2x" class="avatar avatar-120 photo" height="120" width="120">
-    <span class="byline">
-      <span>by</span>
-      <span class="author vcard"><a class="url fn n" href="https://signalcleveland.org/author/celiah/">Celia Hack</a></span>
-    </span><!-- .byline -->
-    <span class="posted-on"><time class="entry-date published" datetime="2026-09-28T00:04:00-04:00">September 28, 2026</time><time class="updated" datetime="2026-09-14T00:04:00-04:00">September 28, 2026</time></span>
-  </div><!-- .entry-meta -->
-  <div class="scroll-cue">Scroll</div>
 </section>
 
 <div class="collage">
@@ -766,37 +1067,41 @@
   <div class="card">
     <p>Mary Kennedy wheeled a small cart overflowing with paper grocery bags up to her apartment building.</p>
 
-    <figure class="card-figure">
+    <figure class="card-figure has-label label-room">
       <img class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-scaled.jpg" width="2560" height="1838" alt="Mary Kennedy approaches her apartment building as nearby cats run toward her.">
-      <figcaption>As Mary Kennedy approaches her apartment building, the nearby cats run toward her. (Celia Hack/Signal Cleveland)</figcaption>
+      <img style="--w: 773" class="card-label card-label-nudge" src="mary%20label.svg" width="773" height="431" alt="As Mary Kennedy pulls her grocery haul up to her apartment building, the cats who live outside run to greet her.">
     </figure>
 
-    <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at 89th and Hough.</p>
+    <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at E. 89th and Hough.</p>
 
-    <p>But she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs, greeting her as she arrived.</p>
+    <p>At the food bank, she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs when she arrived home.</p>
 
-    <img class="cutout" src="mary-cat-2.png" width="689" height="533" alt="Mary Kennedy bends down to pet two black cats.">
+    <img class="cutout" src="mary%20kitty.png" width="1732" height="1813" alt="Mary Kennedy bends down to pet two black cats.">
 
-    <p>On top of sharing food, she helps residents in the low-income, senior apartment building sign up for transportation services to get to the grocery store or food bank. She tries to organize trips among residents so no one has to go alone.</p>
-
-    <p>“I wouldn't turn a person down that needs help,” she said.</p>
+    <p>“I wouldn't turn a person down that needs help,” she said. On top of sharing food, Kennedy tries to organize grocery trips among her neighbors at Kingsbury Tower, a senior apartment building, so no one has to go alone.</p>
 
     <p>Across Cleveland, more and more seniors do need help. As grocery prices rise and the county’s population ages, the Greater Cleveland Food Bank saw demand among people over 60 grow 45% between 2019 and 2025, more steeply than adults and kids in the same time period.</p>
 
-    <p>“Many of our older adults are living on fixed income. So if they only have so much resource in a month, yet their living expenses are increasing, we see older adults having to make really tough choices,” said Jess Morgan, the chief programs officer at the Greater Cleveland Food Bank.</p>
+    <p>“Many of our older adults are living on fixed income. So if they only have so much resource in a month, yet their living expenses are increasing, we see older adults having to make really tough choices,” said Jessica Morgan, the chief programs officer at the Greater Cleveland Food Bank.</p>
 
     <p>Meanwhile, older adults — aged 55 to 64 — are some of the most likely to lose SNAP benefits under a new set of work rules handed down by Trump administration. And county cuts locally are reducing the number of home-delivered meals seniors can get each week.</p>
 
-    <p>I spoke with more than a dozen seniors around Cuyahoga County, many of whom live at Kennedy’s Kingsbury Tower in Cleveland, about the obstacles and solutions to putting food in their fridge and on their plate. For many, the shrinking safety net means informal networks like Kennedy’s are increasingly important — as are the remaining services and resources that exist.</p>
+    <p>This summer, I spent time speaking with more than a dozen seniors around Cleveland. Many of them I met at a senior program at Fatima Family Center or at two federally-subsidized senior apartment buildings, Kingsbury Tower and University Tower.</p>
+
+    <aside class="note">
+      <p>Looking for advice on how to shop, cook and put food on the table? We’ve gathered tips from seniors, for seniors. <a href="#TODO-tips-link">Read more here</a> — or share your own!</p>
+    </aside>
+
+    <p>In those conversations, seniors shared the growing obstacles to getting food, from the new work requirements to shrinking SNAP benefits. They also shared solutions. For example, health insurance plans are helping many pay their grocery bill. For others, informal networks like the support Kennedy provides is increasingly important — as are the remaining services and resources that exist.</p>
 
     <p>Here’s what I heard.</p>
   </div>
 
   <div class="pin" id="work-rules">
     <figure class="photo-with-label">
-      <img class="label label-top" src="catherine%20label.svg" width="781" height="431" alt="Sixty-four-year-old Catherine Gainey temporarily lost her SNAP benefits earlier this year due to new work requirements for the program.">
+      <img style="--w: 673" class="label label-top" src="catherine%20label.svg" width="673" height="586" alt="Sixty-four-year-old Catherine Gainey temporarily lost her SNAP benefits earlier this year due to new work requirements for the program.">
       <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7708-scaled.jpg" width="1708" height="2560" alt="">
-      <img class="label label-bottom" src="catherine%20label%202.svg" width="781" height="286" alt="Now, she volunteers 20 hours a week at Trinity Cathedral downtown to keep her benefits.">
+      <img style="--w: 781" class="label label-bottom" src="catherine%20label%202.svg" width="781" height="286" alt="Now, she volunteers 20 hours a week at Trinity Cathedral downtown to keep her benefits.">
     </figure>
 
     <div class="card">
@@ -806,19 +1111,22 @@
 
       <p>Two years ago, she retired after working as a chef. The $248 she received from the SNAP program helped keep her pantry full. This spring, though, her food assistance was cut, like thousands of others in her age range.</p>
 
-      <p>“So I got real smart,” Gainey said. She read the paperwork the county sent her and called their office. She realized that new rules required her to work, volunteer or go to school.</p>
+      <p>“So I got real smart,” Gainey said. She read the paperwork the county sent her and realized that new rules required her to work, volunteer or go to school.</p>
 
-      <p>Gainey plotted what to do next. In order to get her small retirement check, she couldn’t work many hours each month — so a part-time job was out. She walked over to the Sterling library near her apartment in the Central neighborhood to ask about volunteer opportunities. Staff there shared a couple options, including the food bank’s community resource center on Cleveland’s East Side. For Gainey, that would require an hour-long ride, with transfers, by public transit.</p>
+      <div class="wrap-text">
+        <img class="float-cutout" style="shape-outside: url('catherine%20cutout.png')" src="catherine%20cutout.png" width="1371" height="1667" alt="Catherine Gainey, hands on her hips, in a Juneteenth T-shirt.">
+        <p>Gainey plotted what to do next. In order to get her small retirement check, she couldn’t work many hours each month — so a part-time job was out. She walked over to the library near her apartment in the Central neighborhood to ask about volunteer opportunities. Staff there suggested the food bank’s community resource center on Cleveland’s East Side. For Gainey, that would require an hour-long ride by public transit.</p>
 
-      <p>“I can’t even get no food stamps. How am I going to catch the bus every day?” Gainey said.</p>
+        <p>“I can’t even get no food stamps. How am I going to catch the bus every day?” Gainey said.</p>
 
-      <p>The library also suggested calling Trinity Cathedral, a church within walking distance of her. That’s where Gainey found a solution to get her benefits back. After hearing her plight, church leaders offered her an opportunity. She could volunteer there, cleaning, watering plants, doing laundry and helping serve free hot meals to the public. At first, Gainey worked on a trial basis. After a couple weeks, the church invited her to stay on longer-term.</p>
+        <p>The library also recommended Trinity Cathedral, a church within walking distance of her. That’s where Gainey found a solution to get her benefits back. After hearing her plight, church leaders offered her an opportunity. She could volunteer there, cleaning, watering plants, doing laundry and helping serve free hot meals to the public. At first, Gainey worked on a trial basis. After a couple weeks, the church invited her to stay on longer-term.</p>
+      </div>
 
-      <p>The arrangement was new for staff at Trinity Cathedral, who typically deal with volunteers that come in once a month or week for a couple hours. Gainey needed 20 hours a week. The church had to assign Gainey a supervisor and find work that fit both her skillset and their needs, said Eric Travis, who works as the church’s associate for congregational ministry. They also needed to set a schedule that would work for all parties, ultimately landing on weekday mornings for three hours a day and several hours on Sunday.</p>
+      <p>The arrangement was new for staff at Trinity Cathedral, who typically deal with volunteers that come in once a month or week for a couple hours. Gainey needed 20 hours a week. The church had to assign Gainey a supervisor and find work that fit both her skillset and their needs, said Eric Travis, who works as the church’s associate for congregational ministry.</p>
 
       <p>They worked it out for Gainey. But it’s not a large-scale solution, Travis said.</p>
 
-      <p>“It is feasible, but only for a single person. We could not support a number of people,” Travis said. Nonprofits that operate on a broader scale — like the food bank — might be more equipped to take on more volunteers, they said.</p>
+      <p>“It is feasible, but only for a single person. We could not support a number of people,” Travis said.</p>
 
       <p>Gainey doesn’t mind the work. She likes staying active and spending time in the century-old chapel, with its stained glass windows and intricate stone carvings. The biggest pain point is the paperwork. Every month, she walks to the county’s Department of Job and Family Services building on Payne Avenue with the sheet of paper confirming her volunteer hours. There, she scans it in to make sure they won’t cut off her benefits again.</p>
 
@@ -827,124 +1135,124 @@
   </div>
 
   <div class="pin" id="snap">
-    <figure class="photo-with-label">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
-      <img class="label label-bottom" src="anna%20label.svg" width="792" height="336" alt="Anna Washington, in the black hat, plays a game with other Kingsbury tower residents about nutrition.">
+    <figure class="framed">
+      <div class="frame">
+        <img style="--w: 792" class="label frame-top" src="anna%20label.svg" width="792" height="355" alt="Anna Washington, in the black hat, plays a game with other Kingsbury Tower residents about nutrition.">
+        <img class="photo crop-mobile" style="--crop-x: 68%" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
+        <img style="--w: 773" class="label frame-bottom-right" src="anna%20label%202.svg" width="773" height="345" alt="Kindred Harbor, a behavioral health and case management nonprofit, leads the classes.">
+      </div>
     </figure>
 
     <div class="card">
       <h2>Seniors say SNAP is shrinking</h2>
 
-      <p>Many of the seniors I spoke with still received SNAP benefits in spite of the new work requirements, which don’t apply to people over 65.</p>
+      <p>Many seniors I spoke with still received SNAP benefits in spite of the new work requirements, which don’t apply to people over 65.</p>
 
-      <p>But they had their own issues with the program: Namely, that it paid for barely a fraction of their grocery bill. The federal government estimates it costs women over 70 about $260 a month to feed themselves on the thriftiest possible budget. But eighty-six-year-old Mabel Messam gets $21 a month. Seventy-one-year-old Mary Morris gets $50 a month. Anna Washington, who is over 65 but declined to share her specific age, gets $26 a month — enough for a “loaf of bread and milk,” she joked.</p>
+      <p>But they had their own issues with the program: Namely, that it paid for barely a fraction of their grocery bill. The federal government estimates it costs women over 70 about $260 a month to feed themselves on the thriftiest possible budget. But eighty-six-year-old Mabel Messam gets a little over $20 a month. Seventy-one-year-old Mary Morris gets $50 a month. Anna Washington, who is over 65 but declined to share her specific age, gets $26 a month — enough for a “loaf of bread and milk,” she joked.</p>
 
-      <p>Nikki Williams, the social service coordinator for Kingsbury Towers, helps residents at the building sign up for SNAP. But many turn her down, daunted by the required paperwork and frustrated with the small allotments.</p>
+      <p>Nikki Williams, the social service coordinator for Kingsbury Tower, helps residents at the building sign up for SNAP. But many turn her down, daunted by the required paperwork and frustrated with the small allotments.</p>
 
       <p>“They don’t even want to go through it for the $23,” Williams said. “They’re like, it’s not even worth the headache.”</p>
 
-      <p>SNAP benefits are calculated through an opaque system that accounts for residents’ income, household size, savings and monthly rent and utility costs. Higher incomes, smaller families and smaller rent payments typically equate to a smaller SNAP allotment. The program also assumes residents will hew to the cheapest possible food budget and that residents will spend 30% of their own income on groceries.</p>
+      <p>The food bank also hears complaints from seniors about how much they get from SNAP, Morgan said. She suspected that it’s mostly due to how the benefits are calculated — an opaque system that accounts for residents’ income, household size, savings, monthly rent and utility costs. Any Social Security income or retirement counts against recipients, as does smaller family size. The program also assumes residents will stick to the cheapest possible food budget and spend 30% of their own income on groceries.</p>
 
-      <p>Still, the women I spoke to said the measly amount of assistance they receive feels far from the reality that beef costs nearly $7 a pound.</p>
+      <p>Still, the women I spoke to said the measly amount of assistance they receive feels far from the reality that ground beef costs nearly $7 a pound.</p>
 
       <p>“I don’t eat a lot of meats no more. I eat fruits, vegetables, salads, stuff like that,” Washington said. “Grapes and oranges. I may eat some meat one time a week, maybe twice a week.”</p>
 
-      <p>The most frustrating part for many was that they used to receive more dollars. In the last couple of years, Seventy-seven-year-old Valeria Ray remembers getting $100 a month in SNAP. Now, she receives $24 a month. She’s not sure why it’s shrunk, given the cost of groceries.</p>
+      <p>The most frustrating part for many was that they used to receive more help. In the last couple of years, Valeria Ray, 77, remembers getting $100 a month in SNAP. Now, she receives $24 a month. She’s not sure why it’s shrunk, given the cost of groceries.</p>
 
-      <p>It may be because of the expiration of COVID-era benefits, said Emily Campbell, the president and chief executive officer for the Center for Community Solutions, which temporarily beefed up the amount residents received to spend on food. Those expired in March 2023, resulting in the average person in the U.S. receiving about $90 a month less in SNAP benefits.</p>
-
-      <p>The steepest drop was for older adults at the minimum benefit level, who saw their monthly benefits drop from $281 to $23, according to the Food Research and Action Center.</p>
+      <p>It may be because of the expiration of COVID-era benefits, said Emily Campbell, the president and chief executive officer for the Center for Community Solutions. During COVID, the federal government temporarily beefed up the amount residents received to spend on food. That expired in March 2023. Older adults who qualify for the lowest amount of SNAP benefits saw the steepest drop, falling from $281 to $23, according to the Food Research and Action Center.</p>
     </div>
   </div>
 
   <div class="pin" id="insurance">
-    <figure class="photo-with-label">
-      <img class="label label-top" src="brenda%20label.svg" width="801" height="279" alt="For Brenda Lee, dollars she got from her insurance card helped her afford this month’s groceries.">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
+    <figure class="photo-with-label pull-center">
+      <img style="--w: 814" class="label label-top" src="brenda%20label.svg" width="814" height="347" alt="For Brenda Lee, benefits she got from her insurance plan helped her pay for groceries in September.">
+      <img class="photo crop-mobile" style="--crop-x: 50%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
     <div class="card">
-      <h2>For some, insurance is stepping in</h2>
+      <h2>The insurance “food cards” helping seniors buy groceries</h2>
 
-      <p>Instead of SNAP, seniors are relying on an unexpected source to pay for their groceries and other basic necessities: their health insurance.</p>
+      <p>Some seniors have found an unexpected source to help pay for their groceries and other basic necessities: their health insurance.</p>
 
-      <p>At least seven seniors told me that they get more than a hundred dollars each month from CareSource or United HealthCare or another insurance company — money that can go toward groceries, rent and utilities. It typically comes in the mail on a preloaded card.</p>
+      <p>At least seven seniors told me that they get more than a hundred dollars each month from CareSource, United HealthCare or another insurance company — money that can go toward groceries, rent and utilities. It typically comes in the mail on a preloaded card, typically called over-the-counter cards because they originated to help patients buy items at the pharmacy.</p>
 
-      <p>“That’s what helps them get by,” said Nikki Williams, the social service coordinator for Kingsbury Towers.</p>
+      <p>“That’s what helps them get by,” Williams said.</p>
 
-      <p>The benefit recently saved seventy-three-year-old Brenda Lee after her SNAP card declined at the grocery store. She believes the county canceled her SNAP benefits because she couldn’t get recertified, a process to confirm residents’ income and household size hasn’t changed. Lee said she called the county’s eligibility center to complete her interview, a key step to maintain the benefits, but never got through to a worker.</p>
+      <p>The benefit recently saved seventy-three-year-old Brenda Lee after her SNAP card declined at the grocery store. She believes the county canceled her SNAP benefits because she couldn’t get recertified, a process to confirm residents still qualify for benefits. Lee said she called the county’s eligibility center to complete her interview but never got through to a worker.</p>
 
-      <p>So she used her card from insurance at the grocery store, instead. She gets about $200 a month. Spending it at the grocery store meant she could stock her fridge. That’s important to her because she likes to eat healthy meals — salmon patties, grits and shrimp, baked chicken.</p>
+      <p>So she used her card from insurance at the grocery store, instead. She gets about $200 a month. Spending it at the grocery store meant she could make the healthy meals she likes to eat — salmon patties, grits and shrimp, baked chicken.</p>
 
       <p>“I’m a diabetic, and I don’t want to eat something that’s going to make me sick,” Lee said.</p>
 
-      <p>But it put her in a tricky spot with her other bills. She typically uses the insurance card to pay for electricity, gas, water and sewer utilities.</p>
+      <p>But it put her in a tricky spot with her other bills. While Lee doesn’t pay rent since she owns her home, she typically uses the insurance card to pay for electricity, gas, water and sewer utilities.</p>
 
-      <p>Another senior, Mary Morris, also said her “food card” from insurance keeps her afloat each month. A few years ago, she received more than $200 in SNAP benefits. Now, they’ve dwindled down to $50. So she started going to the food pantry and relied heavily on donated groceries from her apartment complex.</p>
+      <p>Another senior, Mary Morris, also said her “food card” from insurance keeps her afloat. A few years ago, she received more than $200 in SNAP benefits. Now, they’ve dwindled down to $50. So she started going to the food pantry and relied on donated groceries from her apartment complex.</p>
 
-      <p>Then, she found out about a benefit through her Medicare Advantage plan: $392 a month. She still goes to the food pantry but is now typically able to put it off until the end of the month. By that time, her stamps and the dollars from insurance are used up.</p>
+      <p>Then, she found out about a benefit through her Medicare Advantage plan: $392 a month. She still goes to the food pantry but is now typically able to put it off until the end of the month.</p>
 
-      <p>The challenge? To get these dollars, residents need the right kind of insurance. Their income often has to be low enough to qualify for Medicaid, and they must simultaneously be enrolled in a Medicare plan, which is for people over 65.</p>
+      <p>The challenge? To get an over-the-counter card, residents need the right kind of insurance. Only Medicare Advantage plans — instead of traditional Medicare — offer these cards, said Becky Hayward, an outreach and education supervisor through Ohio’s Senior Health Insurance Information Program. Special plans targeted at people with severe chronic illnesses or whose income is low enough to also qualify for Medicaid are most likely to have these benefits, she added. Insurance plans often only allow the money to be spent on groceries if residents have a qualifying health condition, like diabetes.</p>
 
-      <p>On top of that, many insurance plans require customers to have a certain medical condition — like diabetes – in order to qualify for the money or to be able to spend it on items like food.</p>
-
-      <p><strong>(Read more about how to access ‘food’ cards if you’re 65)</strong></p>
+      <aside class="note">
+        <p>The Ohio Senior Health Insurance Information Program provides Medicare beneficiaries with free, objective, health insurance information and one-on-one counseling. OSHIIP’s hotline experts and trained volunteers educate consumers about Medicare and other health insurance matters. The program can be reached by phone at <a href="tel:+18006861578">800-686-1578</a>.</p>
+      </aside>
     </div>
   </div>
 
   <div class="pin" id="mobility">
-    <figure class="photo-with-label">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt="">
-      <div class="label-stack">
-        <img class="label" src="mario%20label.svg" width="763" height="279" alt="Mario Esquivel in his living room as his dinner cooks in a crockpot nearby.">
-        <img class="cutout" src="crockpot.png" width="1861" height="1430" alt="Mario Esquivel’s crockpot, filled with stewed chicken and vegetables.">
+    <figure class="photo-row stack-mobile">
+      <img style="--w: 889" class="label row-label row-label-left" src="mario%20label.svg" width="889" height="426" alt="Mario Esquivel in his living room as his dinner cooks in a crockpot nearby.">
+      <div class="photo-row-images">
+        <figure style="--ar: 1.3"><img style="object-position: 38% center" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7542-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
+        <figure style="--ar: 1.6"><img style="object-position: 45% center" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt=""></figure>
+        <figure style="--ar: 0.8"><img style="object-position: 25% center" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7540-scaled.jpg" width="1708" height="2560" alt=""></figure>
       </div>
     </figure>
 
     <div class="card">
-      <h2>The mobility challenge</h2>
+      <h2>Mobility challenges? Try home-delivered meals – or crockpots</h2>
 
       <p>On most nights, seventy-one-year-old Mario Esquivel heats up leftover “crockpot special” in his microwave — chicken he stewed alongside whatever veggies, beans and rice he has on hand. He even added papaya once, after his building got a free delivery of it.</p>
 
-      <p>Esquivel spent years working as a chef but was laid off after COVID. After that, he got back surgery. He can still walk, but he typically uses a rollator to get around. The crockpot is his solution.</p>
+      <p>Esquivel spent years working as a chef but was laid off after COVID. After that, he needed back surgery. He can still walk, but he typically uses a rollator to get around. The crockpot is his solution.</p>
 
       <p>“If I put it in a crock pot, I'm not over the stove all day,” Esquivel said.</p>
 
-      <p>For some seniors, the ability to physically shop for and cook food is nearly as tough as rising prices. Home-delivered meals are the silver bullet to eliminate most of these challenges — a “blessing,” said seventy-year-old Ann Ferguson, who receives them from St. Martin de Porres Family Center. She lives by herself and doesn’t cook much anymore. She is still mobile, but her hands are “not functioning like they used to” after working as a seamstress for over forty years, she said.</p>
+      <p>For some seniors, the ability to physically shop for and cook food is nearly as tough as rising prices. Home-delivered meals eliminate most of these challenges — a “blessing,” said seventy-year-old Ann Ferguson, who receives them from St. Martin de Porres Family Center. She lives by herself and doesn’t cook much anymore. She is still mobile, but her hands are not functioning like they used to after working as a seamstress for over forty years, she said.</p>
     </div>
   </div>
 
   <div class="pin">
     <figure class="photo-with-label">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
-      <img class="label label-top-right" src="michael%20label.svg" width="706" height="417" alt="Michael Beasley at Wade Oval park. He’s still able to get around, but home-delivered meals make life tremendously simpler.">
+      <img class="photo crop-mobile" style="--crop-x: 25%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
+      <img style="--w: 898" class="label label-bottom label-center-mobile" src="michael%20label.svg" width="898" height="430" alt="Michael Beasley at Wade Oval park. Home-delivered meals mean he doesn’t have to frequent the grocery store while relying on a walker, he said.">
     </figure>
 
     <div class="card">
-      <p>Sixty-seven-year-old Michael Beasley, who uses a walker, also relies on them. While he is able to get to the grocery store on the bus, the meals mean he doesn’t have to worry about it so consistently. On a summer Wednesday, he planned to reheat a Salisbury steak meal for dinner.</p>
+      <p>Sixty-seven-year-old Michael Beasley, who uses a walker, also relies on them. While he is able to get to the grocery store on the bus, the meals mean he doesn’t have to make the trek all the time. On a summer Wednesday, he planned to reheat a Salisbury steak meal for dinner.</p>
 
-      <p>“It’s fast. It’s quick. I pop it in the microwave,” Beasley said. “I’m getting the vegetables — potatoes. And it’s portioned the way doctors want portions to be portioned.”</p>
+      <p>St. Martin de Porres is able to deliver meals in part from federal funding distributed by the Western Reserve Area Agency on Aging (WRAAA). The meals through this program are free — though they accept donations — and there’s no income limit, said Joey Tomsick, the agency’s director of the program development and planning department. Instead, residents qualify by showing that they are physically unable to make their own meals or shop for groceries.</p>
 
-      <p>St. Martin de Porres is able to deliver meals as part of a federally-funded program organized by the Western Reserve Area Agency on Aging (WRAAA). It’s free — though they accept donations — and there’s no income limit, said Joey Tomsick, the WRAAA’s director of the program development and planning department.</p>
+      <p>Some providers have a waitlist, though, Tomsick said. Funding isn’t the only limiting factor. Having enough volunteers to deliver can be, too, he said.</p>
 
-      <p>Instead, the local providers that pass out the meals — like senior centers or departments on aging — visit residents to assess whether they are physically in need of meal assistance. Some providers have a waitlist, though, Tomsick said. Funding isn’t the only limiting factor. Volunteers can be, too, he said.</p>
-
-      <p>Other agencies that offer affordable meal deliveries are also seeing demand outstrip supply. Cuyahoga County has a program to deliver meals to seniors who don’t qualify for SNAP or Medicaid for as low as $5 a month. The number of meals they’re able to pass out shrank drastically this year as local cuts took effect: they formerly handed out ten to 15 meals a week. Now, they’re offering five meals a week. At the same time, several hundred people are on the wait list to join the program, said Natasha Pietrocola, the director of Cuyahoga County’s Division of Senior and Adult Services.</p>
+      <p>Other agencies that offer affordable or free meal deliveries are also seeing demand outstrip supply. The Benjamin Rose Institute’s Meals on Wheels program has a waitlist, wrote Julie Hayes, the organization’s marketing manager. So does Cuyahoga County, which delivers seniors twenty meals a month for $5 through its Options for Independent Living program. The number of meals per senior it’s able to pass out each month also shrank this year due to county budget cuts, said Natasha Pietrocola, the director of Cuyahoga County’s Division of Senior and Adult Services.</p>
     </div>
   </div>
 
   <div class="pin" id="community">
     <figure class="photo-with-label">
-      <img class="label label-bottom-left" src="patricia%20label.svg" width="714" height="372" alt="Patricia Henderson Elam — a senior at University Towers — helps distribute home-delivered meals to her neighbors.">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
+      <img class="photo crop-mobile" style="--crop-x: 0%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7623-scaled.jpg" width="2560" height="1708" alt="">
+      <img style="--w: 763" class="label label-top-right label-center-mobile label-above-mobile" src="leonard%20label.svg" width="763" height="358" alt="At Kingsbury Tower, resident Leonard Marshall drops senior food boxes off at tenants’ doors.">
     </figure>
 
     <div class="card">
-      <h2>The final mile is often closed by community</h2>
+      <h2>Neighbors who close the last mile</h2>
 
-      <p>A bevy of nonprofits and government programs are in place to help senior residents stock their pantries. Cleveland has dozens of food pantries. The food bank has a senior market program, which passes out fresh produce at senior centers and senior housing towers. The federal government also gives out monthly boxes of free, shelf-stable food to low-income seniors.</p>
+      <p>Even with the bevy of nonprofits and government programs in place to help senior residents stock their pantries, family members, neighbors and social service workers often close the final mile.</p>
 
-      <p>For many seniors, though, family members, neighbors and social service workers close the final mile between these programs and their mouths. Staff like Williams help coordinate the drop-off of food boxes and produce from the food bank at Kingsbury. After it arrives, Leonard Marshall, a resident, helps deliver the food boxes door-to-door.</p>
+      <p>At Kingsbury Tower, Williams, the service coordinator works with the food bank to get food boxes and produce dropped off on-site, so residents don’t need to travel. After it arrives, Leonard Marshall, a resident, helps deliver the food boxes door-to-door.</p>
 
       <p>“That way they don’t gotta come down,” he said. “Cause a lot of ladies is on the walkers.”</p>
     </div>
@@ -952,22 +1260,22 @@
 
   <div class="pin">
     <figure class="photo-with-label">
-      <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7597-scaled.jpg" width="2560" height="1708" alt="">
-      <img class="label label-top-right" src="leonard%20label.svg" width="763" height="279" alt="Leonard Marshall delivers food boxes to seniors throughout Kingsbury Tower.">
+      <img style="--w: 720" class="label label-bottom-left label-center-mobile" src="patricia%20label.svg" width="720" height="449" alt="Patricia Henderson Elam — a senior at University Tower — helps distribute home-delivered meals to her neighbors.">
+      <img class="photo crop-mobile" style="--crop-x: 42%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
     <div class="card">
-      <p>Henderson Elam lives at University Towers and volunteers to coordinate the distribution of home-delivered meals from St. Martin de Porres Family Center to neighbors in the building. She sets up a table on the first floor, calling the 23 residents who are signed up to come down the elevator to pick up the bags. She’s able to shuffle the meals around according to her neighbors’ tastes, so that less food will be wasted. For example, some residents like milk, and others hate it. She saves the milk from the ones likely to throw it away and shares it with those who will drink it.</p>
+      <p>Patricia Henderson Elam, 75, lives at University Tower near Wade Park Avenue and E. 105, and volunteers to coordinate the distribution of home-delivered meals from St. Martin de Porres Family Center to her neighbors. Elam sets up a table on the first floor, calling the 23 residents who are signed up to come down the elevator to pick up the bags. She’s able to shuffle the meals around according to her neighbors’ tastes, so that less food will be wasted. For example, some residents like milk, and others hate it. She saves the milk from the ones likely to throw it away and shares it with those who will drink it.</p>
 
-      <p>Early on, she thought about quitting, but an older gentleman discouraged her from doing so.</p>
+      <p>Early on, Elam — who often goes by Miss Pat — thought about quitting. An older gentleman discouraged her from doing so.</p>
 
-      <p>“He said, ‘Miss Pat, honestly, if you don't do it, I won't eat,’” Henderson Elam said.</p>
+      <p>“He said, ‘Miss Pat, honestly, if you don't do it, I won't eat,’” Elam said.</p>
     </div>
   </div>
 
   <div class="pin">
-    <figure class="photo-row">
-      <img class="label row-label" src="grill%20label.svg" width="689" height="316" alt="Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser.">
+    <figure class="photo-row stack-mobile label-between">
+      <img style="--w: 858" class="label row-label row-label-mid" src="grill%20label.svg" width="858" height="291" alt="Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser.">
       <div class="photo-row-images">
         <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6710-scaled.jpg" width="1708" height="2560" alt=""></figure>
         <figure style="--ar: 1.499"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
@@ -976,11 +1284,18 @@
     </figure>
 
     <div class="card">
-      <p>Other residents – like Rita Harris and Victoria Williams at Kingsbury – simply cook and share hot meals. One Friday in August, the two friends grilled ribs that they planned to sell at a fundraiser for the tenant council Saturday night. The money helps them host a ‘soup kitchen’ a couple times a month, where they make soup to give away to their neighbors. They take it door-to-door because some residents who are blind or can’t cook for other reasons don’t leave their rooms.</p>
+      <p>Other residents – like Rita Harris and Victoria Williams at Kingsbury – cook and share hot meals. One Friday in August, the two friends grilled ribs that they planned to sell the next night at a fundraiser for the tenant council. The money helps them make soup to give away to neighbors when they host a ‘soup kitchen’ a couple times a month. They take the meal door-to-door because some residents who are blind or can’t cook don’t leave their apartments.</p>
 
-      <p>These informal networks are not utopian solutions, especially in environments of scarcity. I saw that neighbors putting in extra work sometimes felt underappreciated and overburdened. Kennedy often feels frustrated that she, a seventy-four-year-old living barely above the poverty level herself, is a primary resource her neighbors turn to. She laments how many don’t take her up on offers to try using senior transportation, and who ask her to grab them food instead of going themselves.</p>
+      <p>These informal networks are not perfect solutions, especially in environments of scarcity. Neighbors putting in extra work sometimes felt underappreciated and overburdened. Kennedy often feels frustrated that she, a seventy-four-year-old living barely above the poverty level herself, is who her neighbors turn to. She laments how many don’t take her up on offers to try using senior transportation, or who ask her to grab them food instead of going themselves.</p>
 
-      <p>Williams — the social service coordinator at Kingsbury — arranged one Friday for a nearby recreation center handing out free produce to drop it off at the apartment tower. That would prevent elderly seniors in wheelchairs from having to make the trek. As Williams wheeled a container full of watermelon into the building, she started taking the names of residents’ who wanted one. But neighbors quickly began fighting with each other and Williams about who would get a watermelon, worried they might miss out on the opportunity for fresh produce.</p>
+      <p>One Friday this summer, Williams arranged for a nearby recreation center handing out free produce to drop it off at the apartment tower. As she wheeled a container full of watermelon into the building, she started taking the names of residents who wanted one. But neighbors started bickering with each other and Williams about who would get a watermelon — worried they might miss out on the opportunity for fresh produce.</p>
+
+      <p>“I’m only one person!” she said, as the tenants crowded around her.</p>
+
+      <figure class="card-figure has-label label-offset">
+        <img class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6733-scaled.jpg" width="2560" height="1708" alt="The garden behind Kingsbury Tower.">
+        <img style="--w: 924" class="card-label" src="garden%20label.svg" width="924" height="459" alt="The garden behind Kingsbury Tower is open to any resident wanting to pick the fresh produce, said Leonard Marshall, a resident who tends to it.">
+      </figure>
     </div>
   </div>
 
