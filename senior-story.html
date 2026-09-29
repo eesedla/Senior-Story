@@ -6,7 +6,7 @@
 <title>Costs are rising, mobility is shrinking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* Signal brand palette. Text and the dark hero share one slate; the rest of
@@ -19,25 +19,35 @@
     --gray: #879599;
     --cream: #f4f0e6;
     --border: #ccd8db;
-    --hero-bg: #b1ca77;
+    --hero-bg: #c7d99e;
+    /* Darker teal and slate for text set directly on the green hero (the
+       headline area): teal-hero ~7.1:1, slate-hero ~12.0:1. Cards and caption
+       boxes are white, so their text keeps the regular --teal and --ink. */
+    --teal-hero: #17453c;
+    --slate-hero: #121617;
 
     --ink: var(--slate);
     --paper: #fff;
-    /* Teal is the accent on the light green #b1ca77 hero (~3.6:1, used only
-       on large type); yellow there is far too faint. */
-    --accent: var(--teal);
+    /* The accent is only used on the hero, so it takes the darker hero
+       teal; yellow there is far too faint. */
+    --accent: var(--teal-hero);
 
-    /* Every label graphic is drawn at the same fraction of its original
-       size (set per image as --w, its native width), so the text inside
-       them all comes out the same size: 45% on desktop, about 21px text,
-       shrinking in step below a 1400px-wide window. */
-    --label-k: min(0.45px, 0.0321vw);
+    /* Photo captions are HTML text in white boxes (.label, .card-label).
+       Each box keeps the proportions of the graphic it replaced: its width
+       is that graphic's native width (--w, set per caption) in em, at 44px
+       of native width per em of text. So the box grows with its text when
+       readers enlarge it. --label-font sets the text size: about 20px on a
+       1400px desktop, at least 1rem so it scales with browser text
+       settings and zoom. */
+    --label-font: clamp(1rem, 1.41vw, 1.25rem);
 
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-heading: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    --font-heading: 'Roboto', Arial, sans-serif;
     /* Mirrors Newspack's .entry-title scale. The theme's variable doesn't cross
        the iframe boundary, so the fallback is what actually applies embedded. */
-    --headline-size: var(--newspack-theme-font-size-xxxl, clamp(2rem, 5.5vw, 4.4rem));
+    /* Sized for regular-width Roboto, which runs wider than the condensed
+       face, so the headline still fits the first screen with the byline. */
+    --headline-size: var(--newspack-theme-font-size-xxxl, clamp(2rem, 4.6vw, 3.75rem));
   }
 
   * { box-sizing: border-box; }
@@ -59,6 +69,23 @@
     overflow-x: clip;
   }
 
+  /* Keyboard focus on every link: a 3px teal ring set 3px off the link,
+     shown only for keyboard (not mouse) focus. Teal clears 3:1 against the
+     green, white and cream backgrounds links sit on. */
+  a:focus-visible {
+    outline: 3px solid var(--teal);
+    outline-offset: 3px;
+  }
+  .hero a:focus-visible { outline-color: var(--teal-hero); }
+
+  /* Every link underline: 2px thick, set 0.2em below the text. The contents
+     menu underlines its text span rather than the whole link row. */
+  a,
+  .toc-text {
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
   /* ---------- Hero / headline ---------- */
 
   .hero {
@@ -69,7 +96,7 @@
     gap: 6vw;
     text-align: left;
     background: var(--hero-bg);
-    color: var(--ink);
+    color: var(--slate-hero);
     /* The bottom padding reserves the strip the two absolutely positioned
        elements occupy: the scroll cue (5vh up from the bottom, ~70px tall) and
        the author credit above it (~56px tall, 25px higher), plus a gap.
@@ -97,7 +124,7 @@
     letter-spacing: -0.01em;
   }
 
-  /* Only Roboto Condensed Bold is loaded, so italic would be browser-faked
+  /* Only Roboto Bold is loaded, so italic would be browser-faked
      (slanted glyphs, poor spacing). Color alone carries the emphasis. */
   .headline em {
     font-style: normal;
@@ -108,8 +135,8 @@
      .entry-meta block, so the class names (byline, author, posted-on) match
      the theme. This page doesn't load the theme, so the layout is set here:
      avatar on the left, "by <name>" over the date on the right. The meta
-     text is slate ink, since --gray is only ~1.7:1 on the light
-     background. */
+     text is the hero slate (~12:1), since --gray is only ~2:1 on the
+     green. */
   .entry-meta {
     position: absolute;
     left: 50%;
@@ -122,9 +149,9 @@
     align-items: center;
     align-content: center;
     font-family: var(--font-body);
-    font-size: 0.95rem;
+    font-size: 1.125rem; /* 18px at the default text size */
     line-height: 1.35;
-    color: var(--ink);
+    color: var(--slate-hero);
     white-space: nowrap;
   }
 
@@ -141,7 +168,7 @@
   .entry-meta .posted-on { align-self: start; }
 
   .entry-meta .author a {
-    color: var(--ink);
+    color: var(--slate-hero);
     font-weight: 600;
     text-decoration: none;
   }
@@ -155,8 +182,8 @@
      one; without the theme it would print the date twice. */
   .entry-meta time.updated { display: none; }
 
-  /* Contents guide, pinned to the right of the hero. Links are slate ink on the
-     light background (~4.7:1); the teal accent is kept for the title only. */
+  /* Contents guide, pinned to the right of the hero. Links are the hero slate
+     (~12:1); the hero teal accent is kept for the title and arrows. */
   .contents {
     /* Held to at least 24rem so the item text doesn't get squeezed into a
        narrow column beside the picture slot. */
@@ -198,7 +225,7 @@
     grid-template-columns: 7rem 1fr;
     align-items: center;
     column-gap: 1rem;
-    color: var(--ink);
+    color: var(--slate-hero);
     text-decoration: none;
   }
 
@@ -376,9 +403,9 @@
     left: 50%;
     transform: translateX(-50%);
     font-family: var(--font-body);
-    font-size: 0.85rem;
+    font-size: 1.125rem; /* 18px at the default text size */
     letter-spacing: 0.02em;
-    color: var(--ink);
+    color: var(--slate-hero);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -390,12 +417,20 @@
     width: 1px;
     height: 40px;
     background: linear-gradient(var(--gray), transparent);
-    animation: pulse 1.8s ease-in-out infinite;
+    /* Pulses three times (about 5 seconds), then rests fully visible, so
+       nothing on the page keeps moving (WCAG 2.2.2). Each cycle starts and
+       ends at full opacity, so it stops without a jump. */
+    animation: pulse 1.8s ease-in-out 3;
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* No pulse at all for readers who ask for reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue::after { animation: none; }
   }
 
   .hero { position: relative; }
@@ -489,8 +524,11 @@
   .continues {
     background: var(--hero-bg);
     padding: 5vh 0 10vh;
-    /* Card body copy per the Signal card convention. */
-    font-size: clamp(18px, 1.9vw, 21px);
+    /* Card body copy per the Signal card convention: 18px to 21px at the
+       default text size, in rem so it follows the reader's browser
+       text-size setting. The preferred value is rem-based too, so a larger
+       setting enlarges the text at every width, not just at the limits. */
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.3125rem);
     line-height: 1.75;
     color: var(--ink);
   }
@@ -546,15 +584,7 @@
     width: 100%;
     height: auto;
   }
-  /* The rail's captions are white for the turquoise; inside a white card they
-     take the theme's caption gray (#515151), and no side gutter since the
-     figure is already inset. */
-  .card .card-figure figcaption {
-    color: var(--newspack-theme-color-text-light, #515151);
-    padding: 0;
-  }
-
-  .card p { margin-top: 0; margin-bottom: 1.1em; }
+  .card p { margin-top: 0; margin-bottom: 1.5em; }
   /* Links in the story copy: teal, underlined, like the note-card links. */
   .card p a {
     color: var(--teal);
@@ -570,7 +600,7 @@
     position: absolute;
     top: -1.5rem;
     left: -2.5rem;
-    width: calc(var(--w) * var(--label-k));
+    width: calc(var(--w) * 1em / 44);
     height: auto;
   }
   /* Desktop nudge for one label: further up and left off the corner, with
@@ -596,7 +626,7 @@
       left: 50%;
       transform: translateX(-50%);
       display: block;
-      width: calc(var(--w) * var(--label-k));
+      width: calc(var(--w) * 1em / 44);
       margin: 12px 0 0;
     }
     .card > figure.card-figure.has-label { margin-top: 0.4em; }
@@ -653,7 +683,7 @@
   }
   .card > :last-child { margin-bottom: 0; }
 
-  /* Subheads mirror the theme's h2 in story content: Roboto Condensed Bold,
+  /* Subheads mirror the theme's h2 in story content: Roboto Bold,
      1.2 line height, 1.4em stepping up to 1.8em on wider screens. The 782px
      step is the theme's usual tablet breakpoint, assumed rather than measured.
      Each one opens a card, so there's no top margin. */
@@ -743,28 +773,29 @@
     margin: 0;
     min-width: 0;
   }
-  .pin > figure.photo-with-label > img.label {
-    flex: 0 1 auto;
-    width: calc(var(--w) * var(--label-k));
+  .pin > figure.photo-with-label .label {
+    /* Captions keep their full width; the photo gives up the space. */
+    flex: 0 0 auto;
+    width: calc(var(--w) * 1em / 44);
   }
-  .pin > figure.photo-with-label > img.label {
+  .pin > figure.photo-with-label .label {
     position: relative;
     z-index: 1;
   }
-  .pin > figure.photo-with-label > img.label-top {
+  .pin > figure.photo-with-label .label-top {
     align-self: flex-start;
     margin-right: -2.5vw;
     /* Nudged down and further onto the photo without moving the others. */
     transform: translate(1.5vw, 4vh);
   }
-  .pin > figure.photo-with-label > img.label-bottom {
+  .pin > figure.photo-with-label .label-bottom {
     align-self: flex-end;
     margin-left: -2.5vw;
     /* Nudged up and further onto the photo, mirroring the first label. */
     transform: translate(-1.5vw, -4vh);
   }
   /* Left side, level with the photo's bottom: nudged up and onto the photo. */
-  .pin > figure.photo-with-label > img.label-bottom-left {
+  .pin > figure.photo-with-label .label-bottom-left {
     align-self: flex-end;
     margin-right: -2.5vw;
     transform: translate(1.5vw, -4vh);
@@ -773,11 +804,11 @@
      right side so the photo sits nearer the center, and slide the label
      a little further onto the photo. */
   .pin > figure.photo-with-label.pull-center { padding-right: 7vw; }
-  .pin > figure.photo-with-label.pull-center > img.label-top {
+  .pin > figure.photo-with-label.pull-center > .label-top {
     transform: translate(3.5vw, 4vh);
   }
   /* Right side, level with the photo's top: nudged down and onto the photo. */
-  .pin > figure.photo-with-label > img.label-top-right {
+  .pin > figure.photo-with-label .label-top-right {
     align-self: flex-start;
     margin-left: -2.5vw;
     transform: translate(-1.5vw, 4vh);
@@ -791,7 +822,7 @@
     display: flex;
     justify-content: center;
   }
-  .framed .frame { position: relative; }
+  .framed .frame { position: relative; margin: 0; }
   .framed .frame > img.photo {
     display: block;
     width: auto;
@@ -800,10 +831,10 @@
     max-height: 74vh;
     max-height: 74svh;
   }
-  .framed .frame > img.label {
+  .framed .frame .label {
     position: absolute;
     z-index: 1;
-    width: calc(var(--w) * var(--label-k));
+    width: calc(var(--w) * 1em / 44);
     height: auto;
   }
   .framed .frame-top {
@@ -819,19 +850,29 @@
     transform: translate(35%, -8%);
   }
 
-  /* Captions sit on the turquoise, so they take the slate ink (~4.7:1 on #b1ca77) rather than the
-     theme's gray. Sizing follows the theme's figcaption (0.7em, 1.6 line
-     height) but is set in Inter. Centered and as wide as the photo, with a 25px
-     gutter so text never touches the edge. */
-  .continues figcaption {
-    font-family: var(--font-body);
+  /* Photo captions: HTML text in a white box with a thin slate border,
+     matching the label graphics they replaced. Width comes from --w (see
+     :root); the positioning rules for each placement set the rest. */
+  .label,
+  .card-label {
+    display: block;
+    width: calc(var(--w) * 1em / 44);
+    max-width: 100%;
+    margin: 0;
+    padding: 0.45em 0.65em;
+    background: var(--paper);
+    border: max(1px, 0.07em) solid var(--ink);
     color: var(--ink);
-    font-size: 0.7em;
-    line-height: 1.6;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: var(--label-font);
+    line-height: 1.35;
     text-align: center;
-    margin-top: 12px;
-    padding: 0 25px;
   }
+  /* A figure with two captions keeps both in one figcaption; its two boxes
+     take part in the figure's layout directly. */
+  figcaption.cap-split { display: contents; }
+  .pin > figure.photo-with-label .label-top { order: -1; }
 
   /* Photos side by side at the same width as the other photos, square
      cornered, cropped to cover. Each figure's flex-grow is its own aspect ratio
@@ -846,20 +887,20 @@
     height: 74svh;
     overflow: hidden;
   }
-  .photo-row > img.row-label {
+  .photo-row > .row-label {
     display: block;
     position: relative;
     z-index: 1;
     /* Also capped by window height so the pinned row plus label fits on a
        short screen. */
-    width: calc(var(--w) * var(--label-k));
+    width: calc(var(--w) * 1em / 44);
     max-width: 45vh;
     height: auto;
     margin: 0 auto -9vh;
     margin-bottom: -9svh;
   }
   /* Shifted left of center on desktop; centered again on phones. */
-  .photo-row > img.row-label-left {
+  .photo-row > .row-label-left {
     transform: translateX(-14vw);
     /* A larger label, so it overlaps further to keep the group short
        enough to hide behind an 86vh card. */
@@ -888,12 +929,9 @@
      than the window, so the next card is pushed further down to give the
      revealed photo a moment on its own before it rolls over it. */
   @media (max-aspect-ratio: 1/1) {
-    /* Phones: one label scale for every label, as large as the widest
-       one (the 924px garden label) allows while still fitting across a
-       card: about 36% of original size on a 390px phone. It depends only on
-       the screen width, so labels stay the same size on short phones too;
-       there the photos give up space instead (see below). */
-    :root { --label-k: min(0.45px, 0.0925vw); }
+    /* Phones: caption text about 16px on a 390px phone, the largest that
+       lets the widest caption (the garden one) fit across a card. */
+    :root { --label-font: clamp(0.9rem, 4.07vw, 1.25rem); }
     /* Each photo break is a box exactly as tall as the cards' 86vh minimum,
        pinned 7vh from the top, so the box sits centered on the screen and
        its photos and labels are centered inside it. Being no taller than a
@@ -924,7 +962,7 @@
     /* Mario's row stacks instead: three full-width strips sharing a block
        short enough to pin in the gap and hide behind an 86vh card. */
     /* Less overlap on phones, so the label sits higher on the stack. */
-    .photo-row > img.row-label-left {
+    .photo-row > .row-label-left {
       transform: none;
       margin-bottom: -5vh;
       margin-bottom: -5svh;
@@ -956,7 +994,7 @@
       order: 3;
     }
     .photo-row.label-between .photo-row-images figure:first-child { order: 1; }
-    .photo-row.label-between > img.row-label-mid {
+    .photo-row.label-between > .row-label-mid {
       order: 2;
       align-self: center;
       margin: 10px 0;
@@ -969,7 +1007,7 @@
     .pin > figure.photo-with-label { flex-direction: column; gap: 12px; }
     /* Labels never shrink or cap on phones, so every one stays at the
        shared scale. */
-    .pin > figure img.label { flex-shrink: 0; max-width: none; }
+    .pin > figure .label { flex-shrink: 0; max-width: 100%; }
     /* Photos are the flexible part of each group: they shrink (cropping
        to cover) whenever labels and photo together would outgrow the box. */
     .pin > figure.photo-with-label > img.photo {
@@ -980,13 +1018,13 @@
       min-height: 0;
       object-fit: cover;
     }
-    .pin > figure.photo-with-label > img.label { margin: 0; transform: none; }
+    .pin > figure.photo-with-label .label { margin: 0; transform: none; }
     .pin > figure.photo-with-label.pull-center { padding-right: 0; }
-    .pin > figure.photo-with-label.pull-center > img.label-top { transform: none; align-self: center; }
-    .pin > figure.photo-with-label > img.label.label-center-mobile { align-self: center; }
-    .pin > figure.photo-with-label > img.label-above-mobile { order: -1; }
-    .pin > figure.photo-with-label > img.label-top-right { align-self: flex-end; }
-    .pin > figure.photo-with-label > img.label-bottom-left { align-self: flex-start; order: 1; }
+    .pin > figure.photo-with-label.pull-center > .label-top { transform: none; align-self: center; }
+    .pin > figure.photo-with-label .label.label-center-mobile { align-self: center; }
+    .pin > figure.photo-with-label .label-above-mobile { order: -1; }
+    .pin > figure.photo-with-label .label-top-right { align-self: flex-end; }
+    .pin > figure.photo-with-label .label-bottom-left { align-self: flex-start; order: 1; }
     /* Framed photo: labels stack above and below, the first to the left,
        the photo centered and the second to the right. */
     .framed .frame {
@@ -995,10 +1033,10 @@
       flex-direction: column;
       gap: 12px;
     }
-    .framed .frame > img.label {
+    .framed .frame .label {
       position: static;
       transform: none;
-      width: calc(var(--w) * var(--label-k));
+      width: calc(var(--w) * 1em / 44);
     }
     .framed .frame-top { align-self: flex-start; }
     .framed .frame { flex: 0 1 auto; min-height: 0; }
@@ -1075,7 +1113,7 @@
 
     <figure class="card-figure has-label label-room">
       <img class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-scaled.jpg" width="2560" height="1838" alt="Mary Kennedy approaches her apartment building as nearby cats run toward her.">
-      <img style="--w: 773" class="card-label card-label-nudge" src="mary%20label.svg" width="773" height="431" alt="As Mary Kennedy pulls her grocery haul up to her apartment building, the cats who live outside run to greet her.">
+      <figcaption class="card-label card-label-nudge" style="--w: 773">As Mary Kennedy pulls her grocery haul up to her apartment building, the cats who live outside run to greet her.</figcaption>
     </figure>
 
     <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at E. 89th and Hough.</p>
@@ -1105,9 +1143,11 @@
 
   <div class="pin" id="work-rules">
     <figure class="photo-with-label">
-      <img style="--w: 673" class="label label-top" src="catherine%20label.svg" width="673" height="586" alt="Sixty-four-year-old Catherine Gainey temporarily lost her SNAP benefits earlier this year due to new work requirements for the program.">
       <img class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7708-scaled.jpg" width="1708" height="2560" alt="">
-      <img style="--w: 781" class="label label-bottom" src="catherine%20label%202.svg" width="781" height="286" alt="Now, she volunteers 20 hours a week at Trinity Cathedral downtown to keep her benefits.">
+      <figcaption class="cap-split">
+        <span class="label label-top" style="--w: 673">Sixty-four-year-old Catherine Gainey temporarily lost her SNAP benefits earlier this year due to new work requirements for the program.</span>
+        <span class="label label-bottom" style="--w: 781">Now, she volunteers 20 hours a week at Trinity Cathedral downtown to keep her benefits.</span>
+      </figcaption>
     </figure>
 
     <div class="card">
@@ -1142,11 +1182,13 @@
 
   <div class="pin" id="snap">
     <figure class="framed">
-      <div class="frame">
-        <img style="--w: 792" class="label frame-top" src="anna%20label.svg" width="792" height="355" alt="Anna Washington, in the black hat, plays a game with other Kingsbury Tower residents about nutrition.">
+      <figure class="frame">
         <img class="photo crop-mobile" style="--crop-x: 68%" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-scaled.jpg" width="2560" height="1703" alt="">
-        <img style="--w: 773" class="label frame-bottom-right" src="anna%20label%202.svg" width="773" height="345" alt="Kindred Harbor, a behavioral health and case management nonprofit, leads the classes.">
-      </div>
+        <figcaption class="cap-split">
+          <span class="label frame-top" style="--w: 792">Anna Washington, in the black hat, plays a game with other Kingsbury Tower residents about nutrition.</span>
+          <span class="label frame-bottom-right" style="--w: 773">Kindred Harbor, a behavioral health and case management nonprofit, leads the classes.</span>
+        </figcaption>
+      </figure>
     </figure>
 
     <div class="card">
@@ -1174,7 +1216,7 @@
 
   <div class="pin" id="insurance">
     <figure class="photo-with-label pull-center">
-      <img style="--w: 814" class="label label-top" src="brenda%20label.svg" width="814" height="347" alt="For Brenda Lee, benefits she got from her insurance plan helped her pay for groceries in September.">
+      <figcaption class="label label-top" style="--w: 814">For Brenda Lee, benefits she got from her insurance plan helped her pay for groceries in September.</figcaption>
       <img class="photo crop-mobile" style="--crop-x: 50%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
@@ -1209,7 +1251,7 @@
 
   <div class="pin" id="mobility">
     <figure class="photo-row stack-mobile">
-      <img style="--w: 889" class="label row-label row-label-left" src="mario%20label.svg" width="889" height="426" alt="Mario Esquivel in his living room as his dinner cooks in a crockpot nearby.">
+      <figcaption class="label row-label row-label-left" style="--w: 889">Mario Esquivel typically cooks crockpot meals in his apartment at Kingsbury Tower, where he hung a homemade sign on the front door.</figcaption>
       <div class="photo-row-images">
         <figure style="--ar: 1.3"><img style="object-position: 38% center" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7542-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
         <figure style="--ar: 1.6"><img style="object-position: 45% center" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7535-copy-scaled.jpeg" width="2560" height="1726" alt=""></figure>
@@ -1233,7 +1275,7 @@
   <div class="pin">
     <figure class="photo-with-label">
       <img class="photo crop-mobile" style="--crop-x: 25%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_5321-2-scaled.jpg" width="2560" height="1708" alt="">
-      <img style="--w: 898" class="label label-bottom label-center-mobile" src="michael%20label.svg" width="898" height="430" alt="Michael Beasley at Wade Oval park. Home-delivered meals mean he doesn’t have to frequent the grocery store while relying on a walker, he said.">
+      <figcaption class="label label-bottom label-center-mobile" style="--w: 898">Michael Beasley at Wade Oval park. Home-delivered meals mean he doesn’t have to frequent the grocery store while relying on a walker, he said.</figcaption>
     </figure>
 
     <div class="card">
@@ -1250,7 +1292,7 @@
   <div class="pin" id="community">
     <figure class="photo-with-label">
       <img class="photo crop-mobile" style="--crop-x: 0%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7623-scaled.jpg" width="2560" height="1708" alt="">
-      <img style="--w: 763" class="label label-top-right label-center-mobile label-above-mobile" src="leonard%20label.svg" width="763" height="358" alt="At Kingsbury Tower, resident Leonard Marshall drops senior food boxes off at tenants’ doors.">
+      <figcaption class="label label-top-right label-center-mobile label-above-mobile" style="--w: 763">At Kingsbury Tower, resident Leonard Marshall drops senior food boxes off at tenants’ doors.</figcaption>
     </figure>
 
     <div class="card">
@@ -1266,7 +1308,7 @@
 
   <div class="pin">
     <figure class="photo-with-label">
-      <img style="--w: 720" class="label label-bottom-left label-center-mobile" src="patricia%20label.svg" width="720" height="449" alt="Patricia Henderson Elam — a senior at University Tower — helps distribute home-delivered meals to her neighbors.">
+      <figcaption class="label label-bottom-left label-center-mobile" style="--w: 720">Patricia Henderson Elam — a senior at University Tower — helps distribute home-delivered meals to her neighbors.</figcaption>
       <img class="photo crop-mobile" style="--crop-x: 42%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7504-2-scaled.jpg" width="2560" height="1708" alt="">
     </figure>
 
@@ -1281,7 +1323,7 @@
 
   <div class="pin">
     <figure class="photo-row stack-mobile label-between">
-      <img style="--w: 858" class="label row-label row-label-mid" src="grill%20label.svg" width="858" height="291" alt="Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser.">
+      <figcaption class="label row-label row-label-mid" style="--w: 858">Victoria Williams, Rita Harris and Leonard Marshall grill ribs for a tenant council fundraiser.</figcaption>
       <div class="photo-row-images">
         <figure style="--ar: 0.667"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6710-scaled.jpg" width="1708" height="2560" alt=""></figure>
         <figure style="--ar: 1.499"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6702-2-scaled.jpg" width="2560" height="1708" alt=""></figure>
@@ -1300,7 +1342,7 @@
 
       <figure class="card-figure has-label label-offset">
         <img class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6733-scaled.jpg" width="2560" height="1708" alt="The garden behind Kingsbury Tower.">
-        <img style="--w: 924" class="card-label" src="garden%20label.svg" width="924" height="459" alt="The garden behind Kingsbury Tower is open to any resident wanting to pick the fresh produce, said Leonard Marshall, a resident who tends to it.">
+        <figcaption class="card-label" style="--w: 924">The garden behind Kingsbury Tower is open to any resident wanting to pick the fresh produce, said Leonard Marshall, a resident who tends to it.</figcaption>
       </figure>
     </div>
   </div>
