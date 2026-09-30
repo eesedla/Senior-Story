@@ -107,6 +107,62 @@
      from the tab order) is the right call here, not visually-hidden. */
   .addtoany_share_save_container{ display:none!important; }
 
+  /* THE STORY GOES FIRST, NOTHING GETS HIDDEN.
+
+     Newspack Campaigns injects its inline prompts INTO the post body, at a
+     position measured through the content -- so with the Custom HTML block
+     as the only thing in the post, a prompt can perfectly well land ahead
+     of it. That's what put the "Cleveland, Every Day" donate box and the
+     newsletter sign-up between the site nav and the story. Anything else
+     the editor leaves ahead of the block (a stray empty paragraph is the
+     usual one) does the same thing, and shows up as a thin white band above
+     the green.
+
+     The first instinct is to hide them, but that's wrong twice over: it
+     throws away the newsroom's fundraising asks, and it only covers the
+     cases we happened to think of. Laying .entry-content out as a flex
+     column instead, and giving the embed order:-1, puts the story first
+     whatever WordPress decides to put in there -- an Epic Footer prompt, a
+     newsletter box, an empty paragraph -- and every one of them keeps its
+     place in the page, just below the story where it belongs. Nothing here
+     needs updating when a campaign changes. */
+  .entry-content{ display:flex!important; flex-direction:column!important; }
+  #ss-embed-wrap{ order:-1!important; }
+
+  /* The two that flex order can't reach, because they aren't in the post
+     body at all:
+
+       .global_below_header  the leaderboard ad slot directly under the nav,
+                             a sibling of .site-content
+       #secondary            the related-articles/ads sidebar column, which
+                             sits in the same stacking layer as the story
+                             and comes later in the markup -- so against a
+                             full-viewport-width pinned photo it painted
+                             straight over the top of it
+
+     Scoped to this post, like the other overrides here, since they only
+     take effect wherever this Custom HTML block is placed. Hiding the ad
+     slot gives up this post's leaderboard inventory; Newspack also offers a
+     proper per-post "Hide Advertisements" setting in the post sidebar, so
+     prefer that and drop this line if you'd rather keep it out of CSS. The
+     .newspack-lightbox overlay prompts are deliberately left alone: they're
+     modals that arrive over the top later, not things sitting in the way.
+
+     Better still for the sidebar, set this post's Template to "Single Wide"
+     (Post settings -> Template), which is what the John Williams piece
+     uses. That drops the sidebar at the theme level -- the body gets
+     `no-sidebar` -- instead of leaving an empty column hidden behind the
+     story. This rule then costs nothing and covers the case where the
+     template gets changed back. */
+  .newspack_global_ad.global_below_header{ display:none!important; }
+  #secondary.widget-area{ display:none!important; }
+  /* With the sidebar gone the article column can have the width back. The
+     embed doesn't need it -- it measures its own offset from the true
+     viewport edge and cancels it (see fixBreakoutOffset) -- but everything
+     that now sits BELOW the story would otherwise stay in a narrow column
+     with a blank gap beside it. */
+  .has-sidebar .main-content{ width:100%!important; max-width:none!important; float:none!important; }
+
   .post-template-single-wide .site-content,
   .post-template-single-feature .site-content { overflow: visible!important; }
 
@@ -117,6 +173,12 @@
     height:var(--ss-scroll-length, 1600vh)!important;
     margin-top:0!important;
     margin-bottom:0!important;
+    /* Lifts the pinned photo over anything else in the article's own
+       stacking layer, so a widget or ad slot the rules above don't know
+       about can't paint over it the way the sidebar did. Deliberately just
+       1: enough to win against ordinary page furniture, not enough to cover
+       a fixed-position overlay like Newspack's lightbox prompts. */
+    z-index:1;
   }
   /* Gutenberg/Newspack add block-spacing margin above top-level content
      blocks (including alignfull ones — the width exemption doesn't cover
