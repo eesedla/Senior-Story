@@ -544,7 +544,8 @@
     min-height: 86vh;
     min-height: 86svh;
     margin: 6vh auto;
-    padding: clamp(32px, 6vw, 96px) clamp(24px, 4vw, 64px);
+    --card-pad-x: clamp(24px, 4vw, 64px);
+    padding: clamp(32px, 6vw, 96px) var(--card-pad-x);
     background: var(--paper);
     border-radius: 24px;
     display: flex;
@@ -674,8 +675,23 @@
     background: var(--cream);
     border-left: 6px solid var(--yellow);
     font-weight: 600;
+    /* Long words and links wrap inside the box rather than running out. */
+    overflow-wrap: break-word;
   }
   .card > aside.note p { margin: 0; }
+  /* Phones: the note runs the full width of the card, edge to edge, by
+     cancelling the card's side padding. Its own padding matches that
+     padding (less the yellow rule), so its text lines up with the copy. */
+  @media (max-width: 600px) {
+    .card > aside.note {
+      width: auto;
+      max-width: none;
+      margin-left: calc(-1 * var(--card-pad-x));
+      margin-right: calc(-1 * var(--card-pad-x));
+      padding-left: calc(var(--card-pad-x) - 6px);
+      padding-right: var(--card-pad-x);
+    }
+  }
   .card > aside.note a {
     color: var(--teal);
     text-decoration: underline;
@@ -932,16 +948,21 @@
     /* Phones: caption text about 16px on a 390px phone, the largest that
        lets the widest caption (the garden one) fit across a card. */
     :root { --label-font: clamp(0.9rem, 4.07vw, 1.25rem); }
-    /* Each photo break is a box exactly as tall as the cards' 86vh minimum,
-       pinned 7vh from the top, so the box sits centered on the screen and
-       its photos and labels are centered inside it. Being no taller than a
-       card, it still hides completely behind the cards on either side. */
+    /* Each photo break is a box as tall as the cards' 86vh minimum, pinned
+       7vh from the top, so the box sits centered on the screen and its
+       photos and labels are centered inside it. Being no taller than a
+       card, it still hides completely behind the cards on either side.
+       The box is as wide as the cards here, so it stops --corner short of
+       their bottom edge (shorter, with a matching bottom margin); otherwise
+       a full-width photo or label shows past the cards' rounded bottom
+       corners as they scroll away. */
     .pin > figure {
-      top: 7vh;
-      top: 7svh;
-      height: 86vh;
-      height: 86svh;
-      margin-bottom: 0;
+      --corner: 28px;
+      top: calc(7vh + var(--corner) / 2);
+      top: calc(7svh + var(--corner) / 2);
+      height: calc(86vh - var(--corner));
+      height: calc(86svh - var(--corner));
+      margin-bottom: var(--corner);
       width: 90vw;
       display: flex;
       flex-direction: column;
@@ -998,7 +1019,10 @@
       order: 2;
       align-self: center;
       margin: 10px 0;
-      max-width: none;
+      /* Narrower than its desktop proportions, so it wraps to a compact
+         block between the photos instead of spanning them. */
+      width: 15.5em;
+      max-width: 100%;
       flex: none;
     }
     /* Stack label, photo, label, keeping the group well within a screen
@@ -1038,7 +1062,7 @@
       transform: none;
       width: calc(var(--w) * 1em / 44);
     }
-    .framed .frame-top { align-self: flex-start; }
+    .framed .frame-top { align-self: flex-start; order: -1; }
     .framed .frame { flex: 0 1 auto; min-height: 0; }
     .framed .frame > img.photo {
       align-self: center;
@@ -1413,6 +1437,9 @@
   if (!pins.length) return;
   function check() {
     var limit = window.innerHeight * 0.86;
+    /* Phones: less the strip kept clear of the cards' rounded corners
+       (--corner in the CSS). */
+    if (window.matchMedia('(max-aspect-ratio: 1/1)').matches) limit -= 28;
     pins.forEach(function (pin) {
       var fig = pin.querySelector(':scope > figure');
       if (!fig) return;
