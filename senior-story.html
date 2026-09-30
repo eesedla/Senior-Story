@@ -600,7 +600,9 @@
   .card-figure .card-label {
     position: absolute;
     top: -1.5rem;
-    left: -2.5rem;
+    /* Hangs off the photo's corner, but never past the card's edge when
+       the card's side padding is narrower than the overhang. */
+    left: max(-2.5rem, 0.5rem - var(--card-pad-x));
     width: calc(var(--w) * 1em / 44);
     height: auto;
   }
@@ -884,6 +886,9 @@
     font-size: var(--label-font);
     line-height: 1.35;
     text-align: center;
+    /* A word wider than the box (large text, heavy zoom) breaks onto the
+       next line instead of running out of the side. */
+    overflow-wrap: break-word;
   }
   /* A figure with two captions keeps both in one figcaption; its two boxes
      take part in the figure's layout directly. */
@@ -1123,6 +1128,42 @@
   .pin.measuring > figure .frame,
   .pin.flow .photo-row-images,
   .pin.measuring .photo-row-images { flex-shrink: 0; }
+  /* Desktop: a flowed break stacks like the phone layout, captions above
+     and below the photo at up to its full width. Beside or over the photo
+     they'd be squeezed into a column too narrow for the enlarged text. */
+  @media (min-aspect-ratio: 1/1) {
+    .pin.flow > figure.photo-with-label {
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 0;
+    }
+    .pin.flow > figure.photo-with-label .label,
+    .pin.flow > figure.photo-with-label.pull-center > .label-top {
+      align-self: center;
+      max-width: 100%;
+      margin: 0;
+      transform: none;
+    }
+    .pin.flow > figure.framed .frame {
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .pin.flow > figure.framed .frame .label {
+      position: static;
+      max-width: 100%;
+      transform: none;
+    }
+    .pin.flow > figure.framed .frame-top { order: -1; }
+    .pin.flow > figure.framed .frame > img.photo { max-width: 100%; }
+    .pin.flow .photo-row > .row-label {
+      max-width: 100%;
+      margin: 0 auto 12px;
+      transform: none;
+    }
+  }
   /* Phones: stacked photo strips have no box to share out, so each takes
      a landscape shape of its own. */
   @media (max-aspect-ratio: 1/1) {
