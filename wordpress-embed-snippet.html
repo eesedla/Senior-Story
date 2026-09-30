@@ -243,8 +243,19 @@
   function init(){
     var CHILD_URL = 'https://signalcleveland.org/wp-content/uploads/2026/09/senior-story.html';
 
+    // What a screen reader announces when it reaches the frame, and the only
+    // thing identifying it in a browser's list of frames. Without it the
+    // whole story is just "iframe" -- pretty much the one thing a reader
+    // using the frames list can't act on.
+    var FRAME_TITLE = 'Senior tips: by seniors, for seniors';
+
     var wrap = document.getElementById('ss-embed-wrap');
-    var pymParent = new pym.Parent('ss-story-hook', CHILD_URL, {});
+    var pymParent = new pym.Parent('ss-story-hook', CHILD_URL, { title: FRAME_TITLE });
+    // pym sets the title itself from that setting, but only in versions that
+    // know about it -- an older copy served from the CDN would drop it
+    // silently, and a missing frame title isn't the sort of thing anyone
+    // notices by looking. Cheap enough to just make sure.
+    if (pymParent.iframe) pymParent.iframe.setAttribute('title', FRAME_TITLE);
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
