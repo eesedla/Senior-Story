@@ -1,0 +1,370 @@
+<!--
+  ============================================================================
+  CLEVELAND SENIORS / FOOD — WORDPRESS PARENT EMBED SNIPPET
+  ============================================================================
+  Paste this into a "Custom HTML" block in the WordPress post where the
+  scrolly should appear. Adapted from the John Williams billboard piece's
+  snippet, which is already proven on this site; the theme overrides and the
+  full-bleed measuring below are unchanged from it.
+
+  How the pin works: #ss-embed-wrap is a tall invisible "track" that gives
+  you scroll room. #ss-story-hook pins at the top of the viewport (100vh)
+  for the whole time the track is scrolling past. As you scroll, the JS below
+  measures how far through the track you are (0 -> 1) and sends that number
+  into the child iframe over pym's postMessage channel.
+
+  The difference from the Williams piece: that child was one screen tall and
+  drew its own animation from the number. THIS child (senior-story.html) is a
+  real, ordinary-length page built on CSS sticky, so it scrolls ITSELF to
+  match the number instead — which is why the track has to be exactly as long
+  as the child's own page, and why the child takes its own scrollbar away once
+  it's connected (otherwise a wheel over the pinned photo would scroll the
+  story out from under this track and the two would fight).
+
+  TRACK HEIGHT IS AUTOMATIC: the child measures its own real content height
+  and reports it over the same channel — on load, on resize, once web fonts
+  settle, and any other time its height changes (a photo break deciding it's
+  too tall to pin, a late image). The JS below writes that straight into
+  --ss-scroll-length, so the track always matches the child's actual length,
+  with no number to maintain here. --ss-scroll-length's 1600vh below is only
+  the pre-JS fallback, shown for the instant before the child's first report
+  lands; a stale hand-maintained value is what used to make an embed feel
+  like it scrolled far too fast next to the standalone preview.
+
+  BEFORE PUBLISHING:
+  1. Swap CHILD_URL below for wherever senior-story.html actually lives.
+       - While iterating: your GitHub Pages URL.
+       - For the live article: upload senior-story.html itself to the WP
+         Media Library (same as the photos) and use its direct file URL.
+  2. Check that every image URL inside senior-story.html points at a real
+     Media Library file.
+  3. FULL-BLEED: two separate problems had to be solved to get
+     #ss-embed-wrap to truly span the whole browser width:
+       a) WordPress/Gutenberg themes (Newspack included) apply a default
+          "max-width:100%" to direct children of .entry-content to keep
+          normal content narrow. This silently clamped width:100vw right
+          back down to the column width. Fixed by tagging the wrapper with
+          the "alignfull" class themes look for to exempt full-bleed
+          elements, AND forcing max-width:none with !important as a
+          belt-and-suspenders override no matter which selector was actually
+          doing the clamping.
+       b) The classic CSS-only "50vw" breakout trick (left:50% +
+          margin-left:-50vw) only centers correctly when the article column
+          itself is horizontally centered in the browser window. With a
+          sidebar layout the column is pushed off-center, so that trick
+          overshoots on one side and undershoots on the other by the same
+          amount — exactly the "fine on the left, cut off on the right" bug
+          it produced. Fixed by measuring the wrapper's actual offset from
+          the true viewport edge in JS and setting margin-left to cancel it
+          out, on load and on resize (since a responsive sidebar can appear
+          and disappear).
+  4. STICKY PIN BREAKING UNDER "SINGLE WIDE" / "SINGLE FEATURE" TEMPLATES:
+     Newspack Theme sets `.site-content { overflow: hidden; }` specifically
+     for those two templates (to contain other 100vw-wide full-bleed
+     elements, per the theme's own source comments). But an overflow other
+     than 'visible' on ANY ancestor between a position:sticky element and the
+     page breaks the sticky pin entirely — the symptom is "shows the pinned
+     image for one screen, then goes blank" as the content just scrolls away
+     normally instead of staying put. The override below restores
+     overflow:visible on .site-content for those two templates so the pin can
+     work; it's scoped narrowly enough (and this embed already constrains its
+     own width to exactly 100vw) that it shouldn't reintroduce the
+     horizontal-scrollbar issue that safeguard exists for. If you're not
+     using either template, the rule is inert.
+  5. SITE MASTHEAD STAYING PINNED: Newspack Theme makes the site header
+     sticky by default, which fights the full-bleed pinned photo for the top
+     of the screen. The override below un-sticks it for just this post so it
+     scrolls away normally with the rest of the page. Remove it if you'd
+     rather the masthead stay pinned above the embed too.
+  ============================================================================
+-->
+<style>
+  #masthead{ position:static!important; }
+
+  /* Newspack Theme has no native per-post "hide title" toggle for classic
+     posts, so this visually hides the category tag / headline / byline /
+     share-icon block above the scrolly. Uses the standard "visually hidden"
+     technique (position:absolute + clipped to 1px) rather than display:none,
+     so the title stays in the page and in the accessibility tree for screen
+     readers — it's just not shown, since the story's own headline takes over
+     that role visually. It also has to stay in the DOM for another reason
+     here: the JS below reads the real author and published date out of it and
+     relays them into the story's byline. Scoped to just this post, since it
+     only takes effect wherever this Custom HTML block is placed. */
+  .entry-header{
+    position:absolute!important;
+    width:1px!important; height:1px!important;
+    padding:0!important; margin:-1px!important;
+    overflow:hidden!important; clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important; border:0!important;
+  }
+
+  /* the AddToAny share-buttons plugin renders its own row separately from
+     .entry-header, right above the rest of .entry-content — hide it too so
+     nothing but the scrolly sits below the site nav. Unlike the title, these
+     are interactive controls duplicating functionality (share/print links)
+     rather than page-identifying content, so display:none (fully removed
+     from the tab order) is the right call here, not visually-hidden. */
+  .addtoany_share_save_container{ display:none!important; }
+
+  .post-template-single-wide .site-content,
+  .post-template-single-feature .site-content { overflow: visible!important; }
+
+  #ss-embed-wrap{
+    position:relative!important;
+    width:100vw!important;
+    max-width:none!important;
+    height:var(--ss-scroll-length, 1600vh)!important;
+    margin-top:0!important;
+    margin-bottom:0!important;
+  }
+  /* Gutenberg/Newspack add block-spacing margin above top-level content
+     blocks (including alignfull ones — the width exemption doesn't cover
+     vertical spacing), which is what leaves a gap above the embed even with
+     the header and share row hidden. */
+  .entry-content{ margin-top:0!important; padding-top:0!important; }
+  .site-content{ margin-top:0!important; }
+  #ss-story-hook{ position:sticky!important; top:0!important; height:100vh!important; overflow:hidden; }
+  #ss-story-hook iframe{ width:100%!important; height:100%!important; border:0!important; display:block; }
+
+  /* The child has a matching override that drops the whole pinned rail under
+     reduced motion and falls back to a plain static, top-to-bottom article:
+     every photo break leaves the rail and sits in normal flow between its
+     two cards. That means it's no longer one pinned screen's worth of
+     content — it's a normal, much taller flowing page. Keeping THIS page's
+     pin and clip active on top of that would lock the reader's view to a
+     fixed 100vh window and cut off nearly all of the now-taller content with
+     no way to scroll to the rest. So drop the pin and clip here too and let
+     the iframe sit inline at its own natural height instead.
+
+     Getting that height onto the iframe needs a direct JS assist rather than
+     trusting pym's own built-in auto-resize: pym.Parent sets the iframe's
+     real height with a plain iframe.setAttribute('height', ...) whenever the
+     child reports one, but this page's own always-on
+     `#ss-story-hook iframe{ height:100%!important; }` rule (needed for the
+     normal pinned case) outranks that attribute in the cascade whatever its
+     value — confirmed by testing on the Williams piece: the iframe never grew
+     past this rule's initial size no matter how far the reader scrolled. The
+     JS below adds its own 'height' listener that forces an inline !important
+     style instead (which DOES outrank a stylesheet !important rule, unlike a
+     plain attribute), so min-height here is only the placeholder for the
+     instant before that first message lands, not the mechanism doing the
+     real sizing. */
+  @media (prefers-reduced-motion: reduce){
+    #ss-embed-wrap{ height:auto!important; }
+    #ss-story-hook{ position:static!important; height:auto!important; overflow:visible!important; }
+    #ss-story-hook iframe{ height:auto!important; min-height:100vh; }
+  }
+</style>
+
+<div id="ss-embed-wrap" class="alignfull">
+  <div id="ss-story-hook"></div>
+</div>
+
+<script src="https://pym.nprapps.org/pym.v1.min.js"></script>
+<script>
+(function(){
+  // Signal Cleveland's own performance layer rewrites external <script src>
+  // tags to add `defer` automatically (confirmed live: view-source shows
+  // `defer` on the pym.js tag above even though this file never adds it) --
+  // that pushes pym.js's execution to just before DOMContentLoaded instead of
+  // running it synchronously in place. THIS script, having no `src`, can't be
+  // deferred the same way (the defer attribute has no effect on inline
+  // scripts per spec, so it still runs immediately at parse time regardless),
+  // so it was hitting `new pym.Parent(...)` before pym.js had actually run --
+  // "pym is not defined", and since that throws, EVERYTHING after it in this
+  // script (every event listener, the whole embed) never ran either, leaving
+  // just an empty fallback-height box. Waiting for DOMContentLoaded --
+  // guaranteed to fire only after any deferred scripts have already executed,
+  // in order -- fixes this regardless of whether the site defers pym.js, and
+  // keeps working even if that optimization changes again later.
+  function init(){
+    var CHILD_URL = 'https://signalcleveland.org/wp-content/uploads/2026/09/senior-story.html';
+
+    var wrap = document.getElementById('ss-embed-wrap');
+    var pymParent = new pym.Parent('ss-story-hook', CHILD_URL, {});
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Under reduced motion the child (see its own matching CSS and the long
+    // comment above) drops the pinned rail entirely and is just a plain
+    // static, much-taller article -- so instead of stretching this page's
+    // outer scroll TRACK to fake a pin, the iframe itself needs to grow to
+    // that real height. pym.Parent already listens for the child's built-in
+    // 'height' message and sets it via iframe.setAttribute(...), but that's a
+    // plain HTML attribute, which this page's own always-on
+    // `#ss-story-hook iframe{ height:100%!important; }` rule outranks in the
+    // cascade whatever its value. Forcing an inline !important style does
+    // outrank that stylesheet rule, so add our own listener alongside pym's
+    // default one (onMessage supports several handlers per type) to do it.
+    if (reduceMotion){
+      pymParent.onMessage('height', function(pxStr){
+        var iframeEl = document.querySelector('#ss-story-hook iframe');
+        if (iframeEl) iframeEl.style.setProperty('height', pxStr + 'px', 'important');
+      });
+    }
+
+    // The child reports its own real measured height (in px) here every time
+    // it changes -- on load, on resize, after web fonts settle, and whenever
+    // a photo break changes how it lays out -- so this track is always
+    // exactly as long as the story actually is. The child scrolls itself to
+    // the progress figure this track produces, so the two lengths matching is
+    // what makes the scroll 1:1 rather than fast and twitchy.
+    pymParent.onMessage('trackHeight', function(pxStr){
+      wrap.style.setProperty('--ss-scroll-length', pxStr + 'px');
+      onScroll();
+      handshake();
+    });
+    // Reduced motion never sends trackHeight (nothing is pinned, so there's
+    // no track) -- pym's own height message is the one that arrives, so hook
+    // the handshake onto that too. Both are guarded, so whichever comes
+    // first wins and the other is a no-op.
+    pymParent.onMessage('height', handshake);
+
+    // Two things the child can't work out for itself, sent together once the
+    // child is known to be listening. trackHeight (or height) only ever
+    // arrives after the child has loaded and registered its own handlers,
+    // which sidesteps any race where a message sent too early would just be
+    // silently dropped.
+    var handshakeDone = false;
+    function handshake(){
+      if (handshakeDone) return;
+      if (!sendPostMeta()) return;
+      sendViewport();
+      handshakeDone = true;
+    }
+
+    // Reads the REAL author / avatar / published date straight off THIS
+    // post's own .entry-header -- the same one the CSS above hides visually,
+    // though its markup is still very much in the DOM, unhidden as far as JS
+    // is concerned -- and relays it into the child, so the byline under the
+    // headline always matches whatever WordPress says (right author on a
+    // co-written piece, right date whenever this actually goes out) with no
+    // separate date to remember to update.
+    function sendPostMeta(){
+      var meta = document.querySelector('.entry-header .entry-meta');
+      if (!meta) return false;
+      var avatarImg = meta.querySelector('.author-avatar img, img.avatar');
+      var authorA   = meta.querySelector('.byline .author a');
+      var dateEl    = meta.querySelector('.posted-on .entry-date.published');
+      if (!avatarImg || !authorA || !dateEl) return false;
+      pymParent.sendMessage('postMeta', JSON.stringify({
+        avatarSrc:    avatarImg.currentSrc || avatarImg.src,
+        avatarSrcset: avatarImg.getAttribute('srcset') || '',
+        authorName:   authorA.textContent.trim(),
+        authorHref:   authorA.href,
+        dateText:     dateEl.textContent.trim(),
+        dateAttr:     dateEl.getAttribute('datetime') || ''
+      }));
+      return true;
+    }
+
+    // The reader's real screen height. Inside the iframe, a vh is a share of
+    // the FRAME, which under reduced motion is as tall as the whole story --
+    // so the child can't size anything against the screen without being told
+    // how big it is. Only matters in that reduced-motion layout; harmless to
+    // send either way.
+    function sendViewport(){
+      pymParent.sendMessage('viewport', String(window.innerHeight));
+    }
+
+    // The child's "Jump to" links can't scroll the child -- pinned, its
+    // scroll position belongs to this track -- so they send the point in the
+    // story they want as a fraction of it, and this scrolls the track to the
+    // matching place. (Flowed, under reduced motion, the child uses pym's own
+    // built-in scroll-to-child-element instead, which pym.Parent already
+    // handles.) The child also sends this when the browser has scrolled the
+    // frame on its own, to bring a keyboard-focused link into view: without
+    // it, the next progress message would snap the reader straight back.
+    pymParent.onMessage('jumpTo', function(pStr){
+      var p = parseFloat(pStr);
+      if (!isFinite(p)) return;
+      var rect = wrap.getBoundingClientRect();
+      var trackTop = rect.top + window.pageYOffset;
+      var travel = Math.max(0, rect.height - window.innerHeight);
+      window.scrollTo({
+        top: trackTop + clamp(p, 0, 1) * travel,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    });
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  // Computes the correction WITHOUT first resetting marginLeft to 0 and
+  // remeasuring -- that reset-then-remeasure round trip (the previous version
+  // of this function) forces a layout flash where the wrap briefly renders at
+  // its uncorrected position every single time this runs. That's normally
+  // invisible since it's only bound to resize, but iOS Safari fires resize
+  // repeatedly WHILE SCROLLING as its address bar collapses and expands,
+  // which turned into a visible side-to-side jolt. Undoing the CURRENT
+  // margin's own contribution to the measurement instead gets the same
+  // corrected value in one step, with nothing to flash.
+  function fixBreakoutOffset(){
+    var currentMargin = parseFloat(wrap.style.marginLeft) || 0;
+    var rect = wrap.getBoundingClientRect();
+    var naturalLeft = rect.left - currentMargin;
+    var newMargin = -naturalLeft;
+    if (newMargin !== currentMargin) wrap.style.marginLeft = newMargin + 'px';
+  }
+
+  var ticking = false;
+  function onScroll(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var rect = wrap.getBoundingClientRect();
+      var progress = clamp(-rect.top / (rect.height - window.innerHeight), 0, 1);
+      pymParent.sendMessage('progress', String(progress));
+      ticking = false;
+    });
+  }
+
+  // Throttled the same way onScroll already is -- iOS Safari can fire a burst
+  // of resize events in quick succession (see fixBreakoutOffset's comment
+  // above), and running the getBoundingClientRect() reads and writes in there
+  // synchronously on every single one is its own source of layout thrashing
+  // on top of whatever the browser is already doing.
+  var resizeTicking = false;
+  function onResize(){
+    if (resizeTicking) return;
+    resizeTicking = true;
+    requestAnimationFrame(function(){
+      fixBreakoutOffset();
+      resizeTicking = false;
+    });
+    onScroll();
+    // The child sizes its reduced-motion layout against the screen height
+    // this reports, so a resized window has to reach it.
+    if (handshakeDone) sendViewport();
+  }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onResize);
+  fixBreakoutOffset();
+  onScroll();
+
+  // Safety net for wide/no-sidebar desktop layouts: fixBreakoutOffset() above
+  // only re-runs on an actual window resize, but DOMContentLoaded (when
+  // init() -- and this first fixBreakoutOffset() call -- runs) fires once HTML
+  // parsing finishes, which can be well before slower-loading things ABOVE
+  // the embed (ad slots, web fonts, images) have settled into their final
+  // size. If the page reflows after that first measurement, nothing
+  // re-corrects it until the reader happens to resize the window -- on a
+  // 100vw-wide box, even a modest error in the resulting margin shoves the
+  // whole thing sideways, showing as a blank gap on one side and the embed
+  // pushed off-screen on the other. `load` only fires once every resource has
+  // actually finished, so re-checking there catches a reflow the first
+  // measurement missed, on connections and pages slow enough for one to
+  // happen (more third-party ad and tracker weight, slower networks).
+  window.addEventListener('load', fixBreakoutOffset);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    // DOMContentLoaded already fired by the time this ran -- init() would
+    // otherwise never get called at all.
+    init();
+  }
+})();
+</script>

@@ -7,6 +7,40 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@700&display=swap" rel="stylesheet">
+<script>
+/* Which of the three ways this page can be read applies, decided before the
+   first paint so nothing ever shows in a layout that's about to be replaced.
+   The classes go on <html>; the rules that use them are the last two blocks
+   of the stylesheet, and the scripts at the end of the page.
+
+     (no class) STANDALONE — the local/GitHub Pages preview. The page scrolls
+       itself and the CSS below does everything.
+     ss-embedded PINNED IFRAME — the published piece. The WordPress post
+       (wordpress-embed-snippet.html) pins a full-screen iframe of this file
+       and relays how far through its own tall scroll track the reader is;
+       this page scrolls itself to match. The sticky photos and the
+       screen-height sizing keep working because the iframe is exactly one
+       screen tall, so vh/svh here still mean a screen.
+     ss-flat REDUCED MOTION — a plain static page: every photo break drops
+       out of the pinned rail and sits in normal flow between its two cards
+       (the same treatment a break that doesn't fit already gets, see
+       .pin.flow). Readers who ask for reduced motion get no scroll rail at
+       all, pinned or otherwise.
+     ss-px REDUCED MOTION, EMBEDDED — as above, plus every viewport-relative
+       size restated in px. The parent stops pinning under reduced motion and
+       sizes the iframe to this page's own height instead, which makes vh here
+       mean "a share of this page", not "a share of a screen" -- so a 100vh
+       hero or an 86vh card would grow the page, which grows the iframe, which
+       grows vh again, on and on. */
+(function () {
+  var c = document.documentElement.classList;
+  var embedded = window.self !== window.top;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (embedded) c.add('ss-embedded');
+  if (reduce) c.add('ss-flat');
+  if (embedded && reduce) c.add('ss-px');
+})();
+</script>
 <style>
   :root {
     /* Signal brand palette. Text and the dark hero share one slate; the rest of
@@ -1178,6 +1212,101 @@
     .pin.flow .photo-row.label-between,
     .pin.measuring .photo-row.label-between { padding: 0; }
   }
+
+  /* ---------- Inside the WordPress iframe ---------- */
+
+  /* The reader scrolls the post, not this page: the parent relays its own
+     scroll position and the script at the end of the page moves this one to
+     match, so the frame itself is never scrolled directly (the script takes
+     the scrollbar away once it's connected, so a wheel over the photo can't
+     scroll the story out from under the parent's track). Smooth scrolling
+     would fight that, adding its own easing on top of the script's. */
+  html.ss-embedded { scroll-behavior: auto; }
+
+  /* The byline ships hardcoded so the standalone preview shows something
+     real, but on the post the parent reads the true author and published
+     date off WordPress and sends them over. Held back until they land (or
+     the script gives up waiting) so the hardcoded date never flashes. */
+  html.ss-embedded .entry-meta { visibility: hidden; }
+  html.ss-embedded .entry-meta.ss-meta-ready { visibility: visible; }
+
+  /* ---------- Reduced motion, inside the iframe ---------- */
+
+  /* Every viewport-relative size the static layout still depends on, restated
+     in px (see the note by the ss-px class in the head). --vp stands in for
+     the reader's real screen height, which the parent measures and sends
+     over; the fallback is a middling laptop.
+
+     Note that the aspect-ratio media queries above all resolve against the
+     iframe, which here is as tall as this whole page -- so the portrait
+     (phone) rules are what apply, at every screen width. That's mostly what
+     this layout wants anyway, since captions stack above and below their
+     photo rather than overlapping it, but the few phone sizes that don't
+     travel to a wide screen are undone below. */
+  html.ss-px { --vp: 800px; }
+
+  html.ss-px .hero { min-height: 0; }
+  html.ss-px .hero-lead,
+  html.ss-px .contents { min-height: 0; }
+  @media (min-width: 901px) {
+    html.ss-px .hero { padding: 56px 10vw 64px; }
+  }
+  @media (max-width: 900px) {
+    html.ss-px .hero-lead { padding: 40px 7vw 24px; }
+    html.ss-px .contents { padding: 8px 7vw 40px; }
+  }
+  /* In flow the byline sits under the headline like it does on a phone,
+     rather than being positioned against a hero that's no longer a screen
+     tall. The scroll cue goes: there's no full-screen hero left to scroll
+     past, and the post around this page carries its own scrollbar. */
+  html.ss-px .entry-meta {
+    position: static;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    /* In flow it's as wide as the column, and its two grid columns would
+       otherwise sit at opposite ends of it: avatar against the far left,
+       name and date against the far right. */
+    justify-content: start;
+    align-self: center;
+    margin-top: 2.25rem;
+  }
+  html.ss-px .scroll-cue { display: none; }
+
+  html.ss-px .collage { padding: 28px 3vw; }
+  html.ss-px .continues { padding: 32px 0 64px; }
+  /* Cards are as tall as their copy here -- an 86vh minimum is the runaway
+     case: each card would be 86% of the page it's measured against. */
+  html.ss-px .card {
+    min-height: 0;
+    margin: 40px auto;
+    scroll-margin-top: 16px;
+  }
+  html.ss-px .pin.flow > figure { margin: 40px auto 0; }
+  html.ss-px .pin.flow > .card { margin-top: 40px; }
+  html.ss-px .pin.flow[id] { scroll-margin-top: 16px; }
+
+  /* Photos keep their own proportions, capped against the reader's real
+     screen so one doesn't fill it on its own. */
+  html.ss-px .pin > figure > img,
+  html.ss-px .framed .frame > img.photo,
+  html.ss-px .pin > figure.photo-with-label > img.photo {
+    max-height: calc(var(--vp) * 0.62);
+  }
+  /* The phone square crop is for a narrow screen, where it makes the subject
+     read bigger; at desktop width it would be a photo as tall as it is wide. */
+  html.ss-px .pin > figure img.photo.crop-mobile {
+    width: auto;
+    height: auto;
+    aspect-ratio: auto;
+    max-width: 100%;
+  }
+  /* Both photo rows stack here (.pin.flow gives each strip its own landscape
+     shape), so this only catches a future row that doesn't. */
+  html.ss-px .photo-row-images { height: calc(var(--vp) * 0.5); }
+  /* The row labels overlap their photos by a share of the screen; in flow
+     they just sit above them. */
+  html.ss-px .photo-row > .row-label-left { margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -1198,11 +1327,11 @@
   <nav class="contents" aria-label="Contents">
     <h2 class="contents-title">Jump to</h2>
     <ul>
-      <li><a href="#work-rules"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="catherine%20contents.png" alt=""></span></span><span class="toc-text">Older adults are losing SNAP under new rules</span></a></li>
-      <li><a href="#snap"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="anna%20contents.png" alt=""></span></span><span class="toc-text">Is SNAP shrinking?</span></a></li>
-      <li><a href="#insurance"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="brenda%20contents.png" alt=""></span></span><span class="toc-text">These insurance “food cards” are helping seniors buy groceries</span></a></li>
-      <li><a href="#mobility"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces pair"><img src="mario%20contents.png" alt=""><img src="michael%20contents.png" alt=""></span></span><span class="toc-text">Residents with mobility challenges are getting creative</span></a></li>
-      <li><a href="#community"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces stack"><img src="patricia%20contents.png" alt=""><img src="leonard%20and%20friends%20contents.png" alt=""></span></span><span class="toc-text">Neighbors often close the last mile</span></a></li>
+      <li><a href="#work-rules"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/catherine-contents.png" alt=""></span></span><span class="toc-text">Older adults are losing SNAP under new rules</span></a></li>
+      <li><a href="#snap"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/anna-contents.png" alt=""></span></span><span class="toc-text">Is SNAP shrinking?</span></a></li>
+      <li><a href="#insurance"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/brenda-contents.png" alt=""></span></span><span class="toc-text">These insurance “food cards” are helping seniors buy groceries</span></a></li>
+      <li><a href="#mobility"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces pair"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/mario-contents.png" alt=""><img src="https://signalcleveland.org/wp-content/uploads/2026/09/michael-contents.png" alt=""></span></span><span class="toc-text">Residents with mobility challenges are getting creative</span></a></li>
+      <li><a href="#community"><span class="toc-mark" aria-hidden="true"><span class="toc-arrow">→</span><span class="toc-faces stack"><img src="https://signalcleveland.org/wp-content/uploads/2026/09/patricia-contents.png" alt=""><img src="https://signalcleveland.org/wp-content/uploads/2026/09/leonard-and-friends-contents.png" alt=""></span></span><span class="toc-text">Neighbors often close the last mile</span></a></li>
     </ul>
   </nav>
 </section>
@@ -1236,7 +1365,7 @@
 
     <p>At the food bank, she also grabbed raisins to pass out to the neighborhood kids, fruit cups for her blind neighbor who is nervous to leave the building and hot dog buns for an upcoming barbecue at her apartment. She snagged a few cans of tuna and cat food for the skinny black creature — a cat with no name — that wound through her legs when she arrived home.</p>
 
-    <img class="cutout" src="mary%20kitty.png" width="1732" height="1813" alt="Mary Kennedy bends down to pet two black cats.">
+    <img class="cutout" src="https://signalcleveland.org/wp-content/uploads/2026/09/mary-kitty.png" width="1732" height="1813" alt="Mary Kennedy bends down to pet two black cats.">
 
     <p>“I wouldn’t turn a person down that needs help,” she said.</p>
       
@@ -1276,7 +1405,7 @@
       <p>“So I got real smart,” Gainey said. She read the paperwork the county sent her and realized that new rules required her to work, volunteer or go to school.</p>
 
       <div class="wrap-text">
-        <img class="float-cutout" style="shape-outside: url('catherine%20cutout.png')" src="catherine%20cutout.png" width="1371" height="1667" alt="Catherine Gainey, hands on her hips, in a Juneteenth T-shirt.">
+        <img class="float-cutout" style="shape-outside: url('https://signalcleveland.org/wp-content/uploads/2026/09/catherine-cutout.png')" src="https://signalcleveland.org/wp-content/uploads/2026/09/catherine-cutout.png" width="1371" height="1667" alt="Catherine Gainey, hands on her hips, in a Juneteenth T-shirt.">
         <p>Gainey plotted what to do next. In order to get her small retirement check, she couldn’t work many hours each month — so a part-time job was out. She walked over to the library near her apartment in the Central neighborhood to ask about volunteer opportunities. Staff there suggested the food bank’s community resource center on Cleveland’s East Side. For Gainey, that would require an hour-long ride by public transit.</p>
 
         <p>“I can’t even get no food stamps. How am I going to catch the bus every day?” Gainey said.</p>
@@ -1468,12 +1597,42 @@
 
 
 <script>
+/* Embedded: the parts that need no pym.js, kept ahead of it so a slow fetch
+   of that file can't hold the layout up. */
+(function () {
+  var html = document.documentElement;
+  if (html.classList.contains('ss-flat')) {
+    /* Reduced motion: unpin every photo break, by giving each one the same
+       treatment a break too tall to hide behind a card already gets (see
+       .pin.flow). Nothing is pinned and the story reads straight down. */
+    [].forEach.call(document.querySelectorAll('.pin'), function (pin) {
+      pin.classList.add('flow');
+    });
+  }
+  if (html.classList.contains('ss-embedded')) {
+    /* A link would otherwise open inside the frame — one screen tall and
+       pinned, so the reader would be reading another site through a
+       letterbox with no way back. _top hands it to the whole window, like
+       any other link in the post. */
+    [].forEach.call(document.querySelectorAll('a[href]'), function (a) {
+      if (/^(?:https?|mailto|tel):/i.test(a.getAttribute('href'))) {
+        a.setAttribute('target', '_top');
+      }
+    });
+  }
+})();
+</script>
+
+<script>
 /* Photo breaks that don't fit (see the CSS note above .pin.flow). A break
    fits if its photos and captions fit in the height a card can hide (86%
    of the screen) and, on phones, if everything but its photos plus at
    least 60% of its photos' natural height does too. Rechecked when the
    window, zoom or text size changes. */
 (function () {
+  /* Under reduced motion every break is already flowed (see the script
+     above): there's no rail left to drop out of, and nothing to measure. */
+  if (document.documentElement.classList.contains('ss-flat')) return;
   var pins = [].slice.call(document.querySelectorAll('.pin'));
   if (!pins.length) return;
   function check() {
@@ -1520,6 +1679,174 @@
     document.querySelectorAll('.label, .card-label').forEach(function (el) { ro.observe(el); });
   }
   check();
+})();
+</script>
+
+<!-- pym.js: the channel between this page and the WordPress post that embeds
+     it. See wordpress-embed-snippet.html, the other half of this. -->
+<script src="https://pym.nprapps.org/pym.v1.min.js"></script>
+<script>
+(function () {
+  var html = document.documentElement;
+  if (!html.classList.contains('ss-embedded') || !window.pym) return;
+  var flat = html.classList.contains('ss-flat');
+  var child = new pym.Child({ polling: 0 });
+  var scroller = document.scrollingElement || document.documentElement;
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function maxScroll() { return Math.max(0, scroller.scrollHeight - window.innerHeight); }
+
+  /* ---------- the real byline, read off the post ---------- */
+
+  var meta = document.querySelector('.hero .entry-meta');
+  var metaShown = false;
+  function showMeta() {
+    if (metaShown || !meta) return;
+    metaShown = true;
+    meta.classList.add('ss-meta-ready');
+  }
+  /* The parent reads the author, avatar and published date straight off the
+     post's own (visually hidden) .entry-header and sends them here, so the
+     byline always says whatever WordPress says — right author on a
+     co-written piece, right date whenever it actually goes out — with no
+     second copy to keep in step by hand. */
+  child.onMessage('postMeta', function (json) {
+    var m = null;
+    try { m = JSON.parse(json); } catch (e) { m = null; }
+    var avatar = meta && meta.querySelector('img.avatar');
+    var author = meta && meta.querySelector('.byline .author a');
+    var date = meta && meta.querySelector('.posted-on .entry-date.published');
+    if (m && avatar && m.avatarSrc) {
+      avatar.src = m.avatarSrc;
+      avatar.srcset = m.avatarSrcset || '';
+    }
+    if (m && author && m.authorName) {
+      author.textContent = m.authorName;
+      if (m.authorHref) author.href = m.authorHref;
+    }
+    if (m && date && m.dateText) {
+      date.textContent = m.dateText;
+      if (m.dateAttr) date.setAttribute('datetime', m.dateAttr);
+    }
+    showMeta();
+  });
+  /* If the post's Custom HTML block is an older copy that doesn't send it,
+     the hardcoded byline is the best there is — show it rather than leave a
+     hole. Comfortably longer than the handshake can take. */
+  setTimeout(showMeta, 3000);
+
+  /* The reader's real screen height, which only the parent can measure, for
+     the reduced-motion layout's px sizes (see html.ss-px in the stylesheet). */
+  child.onMessage('viewport', function (px) {
+    var v = parseFloat(px);
+    if (v > 0) html.style.setProperty('--vp', v + 'px');
+  });
+
+  /* ---------- keeping the post's scroll track as long as this page ---------- */
+
+  /* Anything that changes this page's height changes how long the parent's
+     track has to be for its scroll to cover all of this one: web fonts
+     landing and rewrapping a caption, a photo break deciding it has to flow,
+     the window resizing, a late image. Watching the body catches them all,
+     rather than a list of the ones we thought of. Flowed, the parent isn't
+     pinning anything and just sizes the frame to fit, which is what pym's
+     own height message is for. */
+  function report() {
+    if (flat) child.sendHeight();
+    else child.sendMessage('trackHeight', String(scroller.scrollHeight));
+  }
+  var queued = false;
+  function queueReport() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; report(); });
+  }
+  report();
+  window.addEventListener('resize', queueReport);
+  window.addEventListener('load', queueReport);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueReport);
+  if ('ResizeObserver' in window) new ResizeObserver(queueReport).observe(document.body);
+
+  /* ---------- "Jump to" ---------- */
+
+  /* This page can't scroll itself to a section. Pinned, its scroll position
+     belongs to the parent's track; flowed, the frame is exactly as tall as
+     its content and has nowhere to scroll. Either way the post has to do
+     the scrolling, so the links ask it to. */
+  var quietUntil = 0;
+  function askParentFor(y, quiet) {
+    var max = maxScroll();
+    child.sendMessage('jumpTo', String(max ? clamp(y / max, 0, 1) : 0));
+    /* A focus jump is this page moving first and the parent catching up, so
+       hold off the progress still arriving from where the parent was. A
+       tapped link is the other way round — there, let the parent's own
+       smooth scroll carry this page along. */
+    if (quiet) quietUntil = Date.now() + 700;
+  }
+  function scrollTopFor(el) {
+    /* Where the browser itself would put this element: its offset, less its
+       scroll-margin (negative on a photo break, which lands the reader just
+       past the card the photo is waiting behind). */
+    var margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    return clamp(el.getBoundingClientRect().top + scroller.scrollTop - margin, 0, maxScroll());
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if (!el) return; /* a placeholder link — leave it to the browser */
+    e.preventDefault();
+    /* Flowed, pym can work out where the section sits in the post on its
+       own, since the frame stands at its full height in the page. */
+    if (flat) child.scrollParentToChildEl(el.id);
+    else askParentFor(scrollTopFor(el), false);
+  });
+
+  if (flat) return; /* flowed, the frame doesn't scroll: nothing below applies */
+
+  /* ---------- scrolling this page to match the post ---------- */
+
+  /* Taking the scrollbar away here rather than in the stylesheet, so a
+     reader whose browser never got pym.js is left with a page that at least
+     still scrolls by itself. A frame with no scrollbar can still be scrolled
+     by script — which is the only thing that moves it from here on — and the
+     photos still stick, because the viewport is still what they stick to.
+     Without this, a wheel over the photo would scroll the story out from
+     under the parent's track and the two would fight. */
+  html.style.overflow = 'hidden';
+
+  var targetY = 0, currentY = 0, applied = -1;
+  child.onMessage('progress', function (p) {
+    if (Date.now() < quietUntil) return;
+    var v = parseFloat(p);
+    if (isFinite(v)) targetY = clamp(v, 0, 1) * maxScroll();
+  });
+
+  /* Ease toward the last position the parent reported, on a steady frame
+     loop, rather than moving the page inside the message handler: on a real
+     post — ads, trackers and other plugins all competing for the main
+     thread — those messages arrive in bursts instead of one a frame, and
+     following each one literally shows that burstiness as stutter. */
+  (function tick() {
+    var max = maxScroll();
+    if (targetY > max) targetY = max;
+    var here = scroller.scrollTop;
+    /* Something other than this loop moved the page: tabbing to a link below
+       the fold, find-in-page, a screen reader moving its cursor. The browser
+       scrolls the frame to bring that into view, leaving it somewhere the
+       parent's track knows nothing about. Take that as the new truth and ask
+       the track to come to it, instead of snapping the reader back on the
+       next message. */
+    if (applied >= 0 && Math.abs(here - applied) > 2) {
+      currentY = targetY = here;
+      askParentFor(here, true);
+    }
+    var d = targetY - currentY;
+    currentY = Math.abs(d) < 0.5 ? targetY : currentY + d * 0.22;
+    if (Math.abs(currentY - here) >= 0.5) scroller.scrollTop = currentY;
+    applied = currentY;
+    requestAnimationFrame(tick);
+  })();
 })();
 </script>
 </body>
