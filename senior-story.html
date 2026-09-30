@@ -471,10 +471,12 @@
 
   /* ---------- Overlapping photo collage ---------- */
 
-  /* The collage sits on the same turquoise as the rail below it. */
+  /* The collage sits on the same turquoise as the rail below it, and runs
+     the full width of the screen: no side padding, and the photos below are
+     sized to fill it with a little to spare. */
   .collage {
     background: var(--hero-bg);
-    padding: 4vh 3vw 4vh;
+    padding: 4vh 0;
   }
 
   .collage-row {
@@ -505,10 +507,10 @@
   .collage-row figure:nth-child(4n+4) { transform: translateY(-1.8vw); }
 
   /* top row: widened to fill the gap left by moving the uncropped photo out */
-  .row-top figure:nth-child(1) { width: 30vw; z-index: 4; }
-  .row-top figure:nth-child(2) { width: 24vw; z-index: 2; }
-  .row-top figure:nth-child(3) { width: 28vw; z-index: 3; }
-  .row-top figure:nth-child(4) { width: 23vw; z-index: 1; }
+  .row-top figure:nth-child(1) { width: 32.4vw; z-index: 4; }
+  .row-top figure:nth-child(2) { width: 25.92vw; z-index: 2; }
+  .row-top figure:nth-child(3) { width: 30.24vw; z-index: 3; }
+  .row-top figure:nth-child(4) { width: 24.84vw; z-index: 1; }
 
   #fig-6702 { transform: translateY(3vw); }
   #fig-7556 { transform: translateY(1.6vw); }
@@ -519,10 +521,10 @@
 
   .row-mid { margin-top: -3vw; }
 
-  .row-mid figure:nth-child(1) { width: 26vw; z-index: 4; }
-  .row-mid figure:nth-child(2) { width: 24vw; z-index: 2; }
-  .row-mid figure:nth-child(3) { width: 28vw; z-index: 3; }
-  .row-mid figure:nth-child(4) { width: 23vw; z-index: 1; }
+  .row-mid figure:nth-child(1) { width: 29.19vw; z-index: 4; }
+  .row-mid figure:nth-child(2) { width: 26.95vw; z-index: 2; }
+  .row-mid figure:nth-child(3) { width: 31.44vw; z-index: 3; }
+  .row-mid figure:nth-child(4) { width: 25.82vw; z-index: 1; }
 
   /* Two photos across, each 54vw with a -2vw margin, so a pair spans the
      full width and bleeds just past both edges. The left photo of each
@@ -532,11 +534,28 @@
     .collage { padding: 5vw 0 7vw; }
     .row-mid { margin-top: 0; }
 
+    /* Two across, always. Laid out as flex items this was a knife edge:
+       each photo occupied exactly half the screen, so at some widths
+       sub-pixel rounding tipped the pair a fraction over the line and the
+       second one wrapped onto a row of its own -- leaving the collage half
+       the screen wide, which 860px and 360px both did. Two grid columns
+       can't tip. The photos are still wider than the column they sit in;
+       they just overhang it rather than competing for room. */
+    .collage-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
     .row-top figure:nth-child(n),
     .row-mid figure:nth-child(n) {
       width: 54vw;
-      margin: -4vw -2vw;
+      margin: -4vw 0;
     }
+    /* Each pair still overlaps down the middle and bleeds past both edges:
+       a 54vw photo in a 50vw column, pushed to the outside of its column
+       and hanging 2vw off the screen. */
+    .collage-row figure:nth-child(odd) { justify-self: start; margin-left: -2vw; }
+    .collage-row figure:nth-child(even) { justify-self: end; margin-right: -2vw; }
 
     .collage-row figure:nth-child(odd) { transform: translateY(5vw); }
     .collage-row figure:nth-child(even) { transform: translateY(-3vw); }
@@ -1273,7 +1292,7 @@
   }
   html.ss-px .scroll-cue { display: none; }
 
-  html.ss-px .collage { padding: 28px 3vw; }
+  html.ss-px .collage { padding: 28px 0; }
   html.ss-px .continues { padding: 32px 0 64px; }
   /* Cards are as tall as their copy here -- an 86vh minimum is the runaway
      case: each card would be 86% of the page it's measured against. */
