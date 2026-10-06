@@ -652,14 +652,6 @@
     width: calc(var(--w) * 1em / 44);
     height: auto;
   }
-  /* Desktop nudge for one label: further up and left off the corner, with
-     extra room above its photo so it clears the paragraph before. */
-  .card-figure .card-label-nudge { transform: translate(-1.5rem, -1.25rem); }
-  .card > figure.card-figure.label-room {
-    max-width: 620px;
-    margin-top: 4.25rem;
-    transform: translateX(2.5rem);
-  }
   /* Desktop: a wider figure with the photo shifted down and right inside
      it, so the photo is larger and the corner label covers less of it. */
   .card > figure.card-figure.label-offset { max-width: 700px; }
@@ -679,8 +671,6 @@
       margin: 12px 0 0;
     }
     .card > figure.card-figure.has-label { margin-top: 0.4em; }
-    .card-figure .card-label-nudge { transform: translateX(-50%); }
-    .card > figure.card-figure.label-room { max-width: 560px; transform: none; }
     .card > figure.card-figure.label-offset { max-width: 560px; }
     .card-figure.label-offset > img.card-photo { width: 100%; margin: 0; }
   }
@@ -1369,9 +1359,8 @@
   <div class="card">
     <p>Mary Kennedy wheeled a small cart overflowing with paper grocery bags up to her apartment building, Kingsbury Tower.</p>
 
-    <figure class="card-figure has-label label-room">
+    <figure class="card-figure">
       <img loading="lazy" class="card-photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_6896-copy-2-1536x1103.jpg" width="1536" height="1103" alt="Mary Kennedy approaches her apartment building as nearby cats run toward her.">
-      <figcaption class="card-label card-label-nudge" style="--w: 773">As Mary Kennedy pulls her grocery haul up to her apartment building, the cats who live outside run to greet her.</figcaption>
     </figure>
 
     <p>She had just returned from the Greater Cleveland Food Bank’s community resource center. She picked up some apples, green onions and ground pork. The center on Waterloo always passes out good portions of meat, she said. She had plans to make egg rolls and couldn’t always find the ingredients in the stores near her at E. 89th and Hough.</p>
