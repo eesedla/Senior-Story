@@ -801,13 +801,15 @@
     margin-top: -92vh;
     margin-top: -92svh;
   }
-  /* Contents links point at the .pin, whose top is the photo's pulled-up
-     spot behind the card before it. The negative offset lands just past
-     that card, so the photo is pinned and fully revealed and the section's
-     card is about to come up from below. */
-  .pin[id] {
-    scroll-margin-top: -88vh;
-    scroll-margin-top: -88svh;
+  /* Contents links point at the section's own subhead, inside the card, so
+     a reader who picks a section lands on the words rather than on the
+     photo break that introduces it. The offset leaves a strip of the card
+     above the subhead instead of butting it against the top of the screen.
+     Landing on the heading rather than the wrapper also means a screen
+     reader announces the section by name on arrival. */
+  .card h2[id] {
+    scroll-margin-top: 12vh;
+    scroll-margin-top: 12svh;
   }
   /* The pull-up above drags the next card up too, so push it back down to
      leave about a screen where the photo shows on its own. */
@@ -1173,7 +1175,6 @@
     margin-bottom: 0;
   }
   .pin.flow > .card { margin-top: 6vh; }
-  .pin.flow[id] { scroll-margin-top: 2vh; }
   /* Photos at their natural size: no squeezing to fit a box. */
   .pin.flow > figure img.photo,
   .pin.measuring > figure img.photo,
@@ -1303,7 +1304,7 @@
   }
   html.ss-px .pin.flow > figure { margin: 40px auto 0; }
   html.ss-px .pin.flow > .card { margin-top: 40px; }
-  html.ss-px .pin.flow[id] { scroll-margin-top: 16px; }
+  html.ss-px .card h2[id] { scroll-margin-top: 24px; }
 
   /* Photos keep their own proportions, capped against the reader's real
      screen so one doesn't fill it on its own. */
@@ -1405,7 +1406,7 @@
     <p>Here’s what I heard.</p>
   </div>
 
-  <div class="pin" id="work-rules">
+  <div class="pin">
     <figure class="photo-with-label">
       <img loading="lazy" class="photo" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7708-1025x1536.jpg" width="1025" height="1536" alt="">
       <figcaption class="cap-split">
@@ -1415,7 +1416,7 @@
     </figure>
 
     <div class="card">
-      <h2>Older adults losing SNAP benefits under new work rules</h2>
+      <h2 id="work-rules">Older adults losing SNAP benefits under new work rules</h2>
 
       <p>Sixty-four-year-old Catherine Gainey was one of nearly 14,000 Cuyahoga County residents who lost SNAP benefits in the past year.</p>
 
@@ -1444,7 +1445,7 @@
     </div>
   </div>
 
-  <div class="pin" id="snap">
+  <div class="pin">
     <figure class="framed">
       <figure class="frame">
         <img loading="lazy" class="photo crop-mobile" style="--crop-x: 68%" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-1536x1022.jpg" width="1536" height="1022" alt="">
@@ -1456,7 +1457,7 @@
     </figure>
 
     <div class="card">
-      <h2>SNAP benefits fall far short of grocery costs, some seniors say</h2>
+      <h2 id="snap">SNAP benefits fall far short of grocery costs, some seniors say</h2>
 
       <p>Many seniors I spoke with still received SNAP benefits in spite of the new work requirements, which don’t apply to people over 65.</p>
 
@@ -1478,14 +1479,14 @@
     </div>
   </div>
 
-  <div class="pin" id="insurance">
+  <div class="pin">
     <figure class="photo-with-label pull-center">
       <figcaption class="label label-top" style="--w: 814">For Brenda Lee, benefits she got from her insurance plan helped her pay for groceries in September.</figcaption>
       <img loading="lazy" class="photo crop-mobile" style="--crop-x: 50%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7553-copy-1536x1025.jpg" width="1536" height="1025" alt="">
     </figure>
 
     <div class="card">
-      <h2>The insurance “food cards” helping seniors buy groceries</h2>
+      <h2 id="insurance">The insurance “food cards” helping seniors buy groceries</h2>
 
       <p>Some seniors have found an unexpected source to help pay for their groceries and other basic necessities: their health insurance.</p>
 
@@ -1513,7 +1514,7 @@
     </div>
   </div>
 
-  <div class="pin" id="mobility">
+  <div class="pin">
     <figure class="photo-row stack-mobile">
       <figcaption class="label row-label row-label-left" style="--w: 889">Mario Esquivel typically cooks Crock-Pot meals in his apartment at Kingsbury Tower, where he hung a homemade sign on the front door.</figcaption>
       <div class="photo-row-images">
@@ -1524,7 +1525,7 @@
     </figure>
 
     <div class="card">
-      <h2>Mobility challenges? Try home-delivered meals – or Crock-Pots</h2>
+      <h2 id="mobility">Mobility challenges? Try home-delivered meals – or Crock-Pots</h2>
 
       <p>On most nights, seventy-one-year-old Mario Esquivel heats up leftover “Crock-Pot special” in his microwave — chicken he stewed alongside whatever veggies, beans and rice he has on hand. He even added papaya once, after his building got a free delivery of it.</p>
 
@@ -1553,14 +1554,14 @@
     </div>
   </div>
 
-  <div class="pin" id="community">
+  <div class="pin">
     <figure class="photo-with-label">
       <img loading="lazy" class="photo crop-mobile" style="--crop-x: 0%" src="https://signalcleveland.org/wp-content/uploads/2026/09/IMG_7623-1536x1025.jpg" width="1536" height="1025" alt="">
       <figcaption class="label label-top-right label-center-mobile label-above-mobile" style="--w: 763">At Kingsbury Tower, resident Leonard Marshall drops senior food boxes off at tenants’ doors.</figcaption>
     </figure>
 
     <div class="card">
-      <h2>Neighbors who close the last mile</h2>
+      <h2 id="community">Neighbors who close the last mile</h2>
 
       <p>Even with the bevy of nonprofits and government programs in place to help senior residents stock their pantries, family members, neighbors and social service workers often close the final mile.</p>
 
