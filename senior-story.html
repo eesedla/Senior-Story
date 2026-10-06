@@ -1216,6 +1216,60 @@
     .pin.measuring .photo-row.label-between { padding: 0; }
   }
 
+  /* ---------- Back to top ---------- */
+
+  /* Desktop landscape only. On a phone the story is already a short scroll
+     per section and a floating button would sit over the cards; and under
+     reduced motion EMBEDDED (html.ss-px) the frame is as tall as the whole
+     story rather than one screen, so position:fixed would pin the button to
+     the bottom of that 20,000px box instead of to the screen -- it would
+     scroll away and never come back. */
+  .back-to-top { display: none; }
+
+  @media (min-width: 901px) and (min-aspect-ratio: 1/1) {
+    .back-to-top {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: .4em;
+      padding: .6em 1em;
+      border: 2px solid var(--slate);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--slate);
+      font: 600 .95rem/1 var(--font-body);
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(.5rem);
+      transition: opacity .2s, transform .2s, visibility 0s .2s, background-color .15s, color .15s;
+    }
+
+    .back-to-top.is-shown {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: opacity .2s, transform .2s, background-color .15s, color .15s;
+    }
+
+    .back-to-top:hover { background: var(--slate); color: var(--paper); }
+
+    .back-to-top:focus-visible {
+      outline: 3px solid var(--teal);
+      outline-offset: 3px;
+    }
+
+    html.ss-px .back-to-top { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .back-to-top, .back-to-top.is-shown { transition: none; }
+  }
+
   /* ---------- Inside the WordPress iframe ---------- */
 
   /* The reader scrolls the post, not this page: the parent relays its own
@@ -1314,7 +1368,7 @@
 </head>
 <body>
 
-<section class="hero">
+<section class="hero" id="top">
   <div class="hero-lead">
     <h1 class="headline">Cleveland seniors say it’s harder to put food on the table as prices rise and the safety net shrinks</h1>
     <div class="entry-meta">
@@ -1603,6 +1657,27 @@
 
   <!-- Continue drafting the rest of the scroll below. -->
 </div>
+
+<!-- Embedded, this can't scroll the page itself -- its scroll position
+     belongs to the post's track -- but it needs no special case: the click
+     handler further down catches every in-page link and asks the post to
+     scroll, the same way the "Jump to" links work. -->
+<a class="back-to-top" href="#top">
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span>Back to top</span>
+</a>
+
+<script>
+/* Show the button once the hero has gone by, hide it again at the top. */
+(function () {
+  var button = document.querySelector(".back-to-top");
+  var hero = document.getElementById("top");
+  if (!button || !hero || !("IntersectionObserver" in window)) return;
+  new IntersectionObserver(function (entries) {
+    button.classList.toggle("is-shown", !entries[0].isIntersecting);
+  }).observe(hero);
+})();
+</script>
 
 
 <script>
