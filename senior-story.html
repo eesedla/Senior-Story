@@ -1232,53 +1232,86 @@
 
   /* ---------- Back to top ---------- */
 
-  /* Desktop landscape only. On a phone the story is already a short scroll
-     per section and a floating button would sit over the cards; and under
-     reduced motion EMBEDDED (html.ss-px) the frame is as tall as the whole
-     story rather than one screen, so position:fixed would pin the button to
-     the bottom of that 20,000px box instead of to the screen -- it would
-     scroll away and never come back. */
-  .back-to-top { display: none; }
+  /* Everything the two shapes share. Hidden by default: the blocks below
+     turn it on, as a labelled pill where there's width for one and as a
+     plain circle where there isn't. */
+  .back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: .4em;
+    border: 2px solid var(--slate);
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--slate);
+    font: 600 .95rem/1 var(--font-body);
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(.5rem);
+    transition: opacity .2s, transform .2s, visibility 0s .2s, background-color .15s, color .15s;
+  }
 
+  .back-to-top.is-shown {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity .2s, transform .2s, background-color .15s, color .15s;
+  }
+
+  .back-to-top:hover { background: var(--slate); color: var(--paper); }
+
+  .back-to-top:focus-visible {
+    outline: 3px solid var(--teal);
+    outline-offset: 3px;
+  }
+
+  /* Landscape desktop: the full pill, arrow and label. */
   @media (min-width: 901px) and (min-aspect-ratio: 1/1) {
     .back-to-top {
-      position: fixed;
-      right: 1.5rem;
-      bottom: 1.5rem;
-      z-index: 10;
       display: inline-flex;
-      align-items: center;
-      gap: .4em;
       padding: .6em 1em;
-      border: 2px solid var(--slate);
-      border-radius: 999px;
-      background: var(--paper);
-      color: var(--slate);
-      font: 600 .95rem/1 var(--font-body);
-      text-decoration: none;
-      box-shadow: 0 4px 14px rgba(0,0,0,.15);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(.5rem);
-      transition: opacity .2s, transform .2s, visibility 0s .2s, background-color .15s, color .15s;
     }
-
-    .back-to-top.is-shown {
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      transition: opacity .2s, transform .2s, background-color .15s, color .15s;
-    }
-
-    .back-to-top:hover { background: var(--slate); color: var(--paper); }
-
-    .back-to-top:focus-visible {
-      outline: 3px solid var(--teal);
-      outline-offset: 3px;
-    }
-
-    html.ss-px .back-to-top { display: none; }
   }
+
+  /* Anything narrower or portrait: just the arrow, in a circle. A pill
+     reading "Back to top" would stretch a good part of the way across a
+     90vw card. The label stays in the markup and is only clipped, so the
+     link still announces itself rather than arriving as an unnamed arrow.
+     Tucked a little closer to the corner, and sized to stay a comfortable
+     tap target. */
+  @media (max-width: 900px), (max-aspect-ratio: 1/1) {
+    .back-to-top {
+      display: inline-flex;
+      right: 1rem;
+      bottom: 1rem;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+    }
+    .back-to-top span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  }
+
+  /* Never inside the reduced-motion embed, whatever the shape: there the
+     frame is as tall as the whole story rather than one screen, so a fixed
+     button pins to the bottom of that 20,000px box and scrolls away for
+     good. Outside the queries above so it beats both. */
+  html.ss-px .back-to-top { display: none; }
 
   @media (prefers-reduced-motion: reduce) {
     .back-to-top, .back-to-top.is-shown { transition: none; }
