@@ -156,6 +156,8 @@
     max-width: 18ch;
     margin: 0;
     letter-spacing: -0.01em;
+    /* Centred at every width, the way the phone layout always set it. */
+    text-align: center;
   }
 
   /* Author credit, centered above the scroll cue. Markup is the live site's
@@ -364,31 +366,6 @@
      since the wrapper isn't positioned there. */
   .hero-lead { flex: 0 1 auto; min-width: 0; }
 
-  /* Centre the headline on the hero, not on what's left of it.
-
-     The hero reserves a deep bottom padding for the two absolutely
-     positioned things at its foot, the byline and the scroll cue. Centring
-     inside that shortened box pushed the headline 88px above the hero's
-     real centre, which is the lopsided look: a thin strip of green above
-     the headline and a deep one below.
-
-     The reservation can't just be trimmed -- it isn't the headline that
-     needs it. The contents menu is the tall one, and measuring showed the
-     menu running into the byline at every smaller value. So instead the
-     left column alone reaches back down through the reservation, by
-     exactly the amount the padding is lopsided, and the headline centres
-     in that full-height box. The menu keeps the reservation and is
-     centred on its own. */
-  @media (min-width: 901px) {
-    .hero { align-items: stretch; }
-    .hero-lead {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      margin-bottom: calc(3vh - 200px);
-    }
-    .contents { align-self: center; }
-  }
 
   /* Below this the two columns don't fit. The hero becomes two full
      screens: the headline, filling the first, with the byline under it and
@@ -413,7 +390,6 @@
       font-size: clamp(2.5rem, 12.5vw, 4.4rem);
       line-height: 1.08;
       max-width: none;
-      text-align: center;
     }
     .entry-meta {
       position: static;
@@ -919,17 +895,29 @@
     width: calc(var(--w) * 1em / 44);
     height: auto;
   }
-  .framed .frame-top {
+  /* One caption over each opposite corner, each hanging about a quarter of
+     its width off the photo's side and a quarter of its height past the top
+     or bottom edge. Both overhang within the card's 90vw, so the next card
+     still carries them off as it scrolls up over the photo.
+
+     Both overhangs are measured, not eyeballed. Sideways there is only
+     5vw of room: the photo is 80vw and the card that has to hide it 90vw,
+     so at 22% the wider caption cleared the card's edge by 15px once the
+     window narrowed to 1100px, and would have shown past the card's
+     rounded corner as it scrolled over. Vertically the overhang counts
+     against the height the break must fit into, and at a third this one
+     measured 600px against the 602px a card can cover on a 700px-tall
+     screen -- near enough the line to drop out of the pinned rail on
+     anything shorter. */
+  .framed .frame-top-left {
     top: 0;
-    left: 50%;
-    transform: translate(-50%, -30%);
+    left: 0;
+    transform: translate(-15%, -24%);
   }
   .framed .frame-bottom-right {
-    /* Hangs off the right edge but stays inside the bottom edge, so it's
-       carried off behind the next card with the photo. */
     right: 0;
     bottom: 0;
-    transform: translate(35%, -8%);
+    transform: translate(15%, 24%);
   }
 
   /* Photo captions: HTML text in a white box with a thin slate border,
@@ -1131,7 +1119,7 @@
       transform: none;
       width: calc(var(--w) * 1em / 44);
     }
-    .framed .frame-top { align-self: flex-start; order: -1; }
+    .framed .frame-top-left { align-self: flex-start; order: -1; }
     .framed .frame { flex: 0 1 auto; min-height: 0; }
     .framed .frame > img.photo {
       align-self: center;
@@ -1219,7 +1207,7 @@
       max-width: 100%;
       transform: none;
     }
-    .pin.flow > figure.framed .frame-top { order: -1; }
+    .pin.flow > figure.framed .frame-top-left { order: -1; }
     .pin.flow > figure.framed .frame > img.photo { max-width: 100%; }
     .pin.flow .photo-row > .row-label {
       max-width: 100%;
@@ -1331,13 +1319,6 @@
   html.ss-px .hero { min-height: 0; }
   html.ss-px .hero-lead,
   html.ss-px .contents { min-height: 0; }
-  /* The desktop rule that centres the headline reaches down through the
-     hero's bottom padding with a vh-based negative margin. Here a vh is a
-     slice of the whole story rather than of a screen, which turns that
-     -200px into roughly +500px and shoves everything below the headline
-     down the page. Nothing is centred in this layout anyway -- the hero is
-     only as tall as its contents -- so the reach is simply off. */
-  html.ss-px .hero-lead { margin-bottom: 0; }
   @media (min-width: 901px) {
     html.ss-px .hero { padding: 56px 10vw 64px; }
   }
@@ -1520,7 +1501,7 @@
       <figure class="frame">
         <img loading="lazy" class="photo crop-mobile" style="--crop-x: 68%" src="https://signalcleveland.org/wp-content/uploads/2026/09/Kingsbury-Tower-Affordable-Housing-Cleveland-4-1536x1022.jpg" width="1536" height="1022" alt="">
         <figcaption class="cap-split">
-          <span class="label frame-top" style="--w: 792">Anna Washington, in the black hat, plays a game with other Kingsbury Tower residents about nutrition.</span>
+          <span class="label frame-top-left" style="--w: 792">Anna Washington, in the black hat, plays a game with other Kingsbury Tower residents about nutrition.</span>
           <span class="label frame-bottom-right" style="--w: 900">Kindred Harbor, a behavioral health and case management nonprofit, leads the classes. (Mikey Indriolo/Signal Cleveland)</span>
         </figcaption>
       </figure>
