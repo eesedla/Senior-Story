@@ -251,7 +251,7 @@
 
   .toc-text {
     text-decoration: underline;
-    text-decoration-color: var(--gray);
+    text-decoration-color: var(--gray);* On mobile, the back to top arrow doesn’t show until you got to the very bottom of the story. 
     text-underline-offset: 0.2em;
     transition: text-decoration-color 0.3s ease;
   }
@@ -1229,7 +1229,17 @@
   .back-to-top {
     position: fixed;
     right: 1.5rem;
-    bottom: 1.5rem;
+    /* --frame-hidden is how much of the bottom of the frame is off screen,
+       which on a phone is the height of the browser's address bar. The
+       frame is pinned at 100vh, and 100vh is the viewport with that bar
+       collapsed -- so while it's showing, the foot of the frame, where
+       this button lives, is below what the reader can see. Fixed
+       positioning holds it to the frame, not to the visible window, so
+       without this it stayed out of sight until the very end of the story,
+       where the pin lets go and the frame's bottom edge rises into view.
+       Zero everywhere else: standalone, and on a desktop where the frame
+       and the window are the same height. */
+    bottom: calc(1.5rem + var(--frame-hidden, 0px));
     z-index: 10;
     display: none;
     align-items: center;
@@ -1280,7 +1290,7 @@
     .back-to-top {
       display: inline-flex;
       right: 1rem;
-      bottom: 1rem;
+      bottom: calc(1rem + var(--frame-hidden, 0px));
       width: 2.75rem;
       height: 2.75rem;
       padding: 0;
@@ -1875,7 +1885,15 @@
      the reduced-motion layout's px sizes (see html.ss-px in the stylesheet). */
   child.onMessage('viewport', function (px) {
     var v = parseFloat(px);
-    if (v > 0) html.style.setProperty('--vp', v + 'px');
+    if (v <= 0) return;
+    html.style.setProperty('--vp', v + 'px');
+    /* The post measures what the reader can actually see; this frame is as
+       tall as the post pinned it, which on a phone is taller by the height
+       of the address bar. The difference is the strip of the frame hanging
+       below the fold, which anything fixed to the bottom has to clear.
+       The post re-sends this as the bar slides away, so it keeps up. */
+    html.style.setProperty('--frame-hidden',
+      Math.max(0, window.innerHeight - v) + 'px');
   });
 
   /* ---------- keeping the post's scroll track as long as this page ---------- */
