@@ -81,7 +81,7 @@
        the iframe boundary, so the fallback is what actually applies embedded. */
     /* Sized for regular-width Roboto, which runs wider than the condensed
        face, so the headline still fits the first screen with the byline. */
-    --headline-size: var(--newspack-theme-font-size-xxxl, clamp(2rem, 4.6vw, 3.75rem));
+    --headline-size: var(--newspack-theme-font-size-xxxl, clamp(2.1rem, 4.9vw, 4rem));
   }
 
   * { box-sizing: border-box; }
@@ -136,7 +136,7 @@
        the author credit above it (~56px tall, 25px higher), plus a gap.
        Otherwise, on a short window the vertically centered headline runs down
        into them. */
-    padding: 8vh 10vw calc(5vh + 200px);
+    padding: 8vh 7vw calc(5vh + 200px);
   }
 
   .kicker {
@@ -363,6 +363,32 @@
      just the left column: the byline and cue are positioned against .hero,
      since the wrapper isn't positioned there. */
   .hero-lead { flex: 0 1 auto; min-width: 0; }
+
+  /* Centre the headline on the hero, not on what's left of it.
+
+     The hero reserves a deep bottom padding for the two absolutely
+     positioned things at its foot, the byline and the scroll cue. Centring
+     inside that shortened box pushed the headline 88px above the hero's
+     real centre, which is the lopsided look: a thin strip of green above
+     the headline and a deep one below.
+
+     The reservation can't just be trimmed -- it isn't the headline that
+     needs it. The contents menu is the tall one, and measuring showed the
+     menu running into the byline at every smaller value. So instead the
+     left column alone reaches back down through the reservation, by
+     exactly the amount the padding is lopsided, and the headline centres
+     in that full-height box. The menu keeps the reservation and is
+     centred on its own. */
+  @media (min-width: 901px) {
+    .hero { align-items: stretch; }
+    .hero-lead {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-bottom: calc(3vh - 200px);
+    }
+    .contents { align-self: center; }
+  }
 
   /* Below this the two columns don't fit. The hero becomes two full
      screens: the headline, filling the first, with the byline under it and
@@ -1305,6 +1331,13 @@
   html.ss-px .hero { min-height: 0; }
   html.ss-px .hero-lead,
   html.ss-px .contents { min-height: 0; }
+  /* The desktop rule that centres the headline reaches down through the
+     hero's bottom padding with a vh-based negative margin. Here a vh is a
+     slice of the whole story rather than of a screen, which turns that
+     -200px into roughly +500px and shoves everything below the headline
+     down the page. Nothing is centred in this layout anyway -- the hero is
+     only as tall as its contents -- so the reach is simply off. */
+  html.ss-px .hero-lead { margin-bottom: 0; }
   @media (min-width: 901px) {
     html.ss-px .hero { padding: 56px 10vw 64px; }
   }
