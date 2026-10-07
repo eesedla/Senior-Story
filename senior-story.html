@@ -1723,6 +1723,7 @@
    of that file can't hold the layout up. */
 (function () {
   var html = document.documentElement;
+  var embedded = html.classList.contains('ss-embedded');
   if (html.classList.contains('ss-flat')) {
     /* Reduced motion: unpin every photo break, by giving each one the same
        treatment a break too tall to hide behind a card already gets (see
@@ -1731,17 +1732,30 @@
       pin.classList.add('flow');
     });
   }
-  if (html.classList.contains('ss-embedded')) {
-    /* A link would otherwise open inside the frame — one screen tall and
-       pinned, so the reader would be reading another site through a
-       letterbox with no way back. _top hands it to the whole window, like
-       any other link in the post. */
-    [].forEach.call(document.querySelectorAll('a[href]'), function (a) {
-      if (/^(?:https?|mailto|tel):/i.test(a.getAttribute('href'))) {
-        a.setAttribute('target', '_top');
-      }
-    });
-  }
+  /* Every link that leaves the story opens in a new tab, so a reader who
+     follows a source doesn't lose their place in a long scroll and can
+     come back to it untouched. Embedded that matters twice over: without a
+     target the link would load inside the frame, which is one screen tall
+     and pinned, leaving the reader to read another site through a
+     letterbox with no way back.
+
+     rel="noopener" travels with the target. It stops the page being opened
+     from reaching back at this one through window.opener. Current browsers
+     imply it for _blank; older ones don't, and it costs nothing to say.
+
+     tel: is deliberately not in that set -- it hands off to a dialer
+     rather than loading a page, so a new tab would just sit there empty.
+     Embedded it keeps _top, which is what stopped the frame trying to
+     navigate itself. */
+  [].forEach.call(document.querySelectorAll('a[href]'), function (a) {
+    var href = a.getAttribute('href');
+    if (/^https?:/i.test(href)) {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener');
+    } else if (embedded && /^(?:mailto|tel):/i.test(href)) {
+      a.setAttribute('target', '_top');
+    }
+  });
 })();
 </script>
 
