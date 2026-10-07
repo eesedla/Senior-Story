@@ -139,15 +139,6 @@
     padding: 8vh 7vw calc(5vh + 200px);
   }
 
-  .kicker {
-    font-family: var(--font-body);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    font-size: 1rem;
-    color: var(--accent);
-    margin-bottom: 1.75rem;
-  }
-
   .headline {
     font-family: var(--font-heading);
     font-size: var(--headline-size);
@@ -1882,9 +1873,21 @@
      rather than a list of the ones we thought of. Flowed, the parent isn't
      pinning anything and just sizes the frame to fit, which is what pym's
      own height message is for. */
+  /* Set while a "Jump to" is in flight, so the handler below can re-aim. */
+  var pendingJump = null, pendingUntil = 0;
+
   function report() {
-    if (flat) child.sendHeight();
-    else child.sendMessage('trackHeight', String(scroller.scrollHeight));
+    if (flat) { child.sendHeight(); return; }
+    child.sendMessage('trackHeight', String(scroller.scrollHeight));
+    /* A jump already in the air was aimed at where that section sat
+       BEFORE this change, and it was aimed as a fraction of the page --
+       so a page that just got taller moves the target twice over, once
+       because the section shifted and once because the fraction now means
+       something else. Re-aim here, right after the parent is told the new
+       length, so both sides are measuring against the same page. */
+    if (pendingJump && Date.now() < pendingUntil) {
+      askParentFor(scrollTopFor(pendingJump), false);
+    }
   }
   var queued = false;
   function queueReport() {
@@ -1929,8 +1932,29 @@
     e.preventDefault();
     /* Flowed, pym can work out where the section sits in the post on its
        own, since the frame stands at its full height in the page. */
-    if (flat) child.scrollParentToChildEl(el.id);
-    else askParentFor(scrollTopFor(el), false);
+    if (flat) { child.scrollParentToChildEl(el.id); return; }
+
+    var aim = scrollTopFor(el);
+    pendingJump = el;
+    pendingUntil = Date.now() + 7000;
+    askParentFor(aim, false);
+
+    /* Then keep aiming for a few seconds. The arithmetic is exact, but
+       where the section sits is not fixed: the photos between here and
+       there are lazy, and they finish loading on the way and grow the
+       page underneath us. Jumping to a section for the first time landed
+       it 400-650px low for exactly that reason. Re-send only when the
+       TARGET itself has moved -- not while we're still travelling to it --
+       so this also picks up a late web font rewrapping captions, or a
+       photo break changing its mind about flowing. */
+    var settle = setInterval(function () {
+      var want = scrollTopFor(el);
+      if (Math.abs(want - aim) > 4) {
+        aim = want;
+        askParentFor(aim, false);
+      }
+    }, 250);
+    setTimeout(function () { clearInterval(settle); pendingJump = null; }, 7000);
   });
 
   if (flat) return; /* flowed, the frame doesn't scroll: nothing below applies */
