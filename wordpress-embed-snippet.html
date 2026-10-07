@@ -487,10 +487,31 @@
   // which turned into a visible side-to-side jolt. Undoing the CURRENT
   // margin's own contribution to the measurement instead gets the same
   // corrected value in one step, with nothing to flash.
+  //
+  // Measured from the DOCUMENT's left edge rather than the viewport's. The
+  // two agree only while the page isn't scrolled sideways, and this one can
+  // be: width:100vw counts the scrollbar's gutter, so the wrap comes out
+  // about 15px wider than the room actually available and the post gains a
+  // horizontal scrollbar. Return to the post with the back button and the
+  // browser restores that sideways offset; this then runs against it and
+  // pushes the embed right by exactly that much while the masthead stays
+  // where it is, which is the misalignment.
+  //
+  // Two things fix it. Take pageXOffset back out of the reading, so the
+  // correction means the same at any scroll position. And set a width that
+  // leaves the scrollbar out, which stops the page scrolling sideways at
+  // all: clientWidth is the viewport less the scrollbar, where 100vw isn't.
+  // The CSS keeps 100vw as the value to use until this first runs, and the
+  // !important matches the stylesheet's, which a plain inline style would
+  // lose to.
   function fixBreakoutOffset(){
+    var available = document.documentElement.clientWidth;
+    if (Math.round(parseFloat(wrap.style.width)) !== available){
+      wrap.style.setProperty('width', available + 'px', 'important');
+    }
     var currentMargin = parseFloat(wrap.style.marginLeft) || 0;
     var rect = wrap.getBoundingClientRect();
-    var naturalLeft = rect.left - currentMargin;
+    var naturalLeft = rect.left + window.pageXOffset - currentMargin;
     var newMargin = -naturalLeft;
     if (newMargin !== currentMargin) wrap.style.marginLeft = newMargin + 'px';
   }
@@ -545,6 +566,18 @@
   // measurement missed, on connections and pages slow enough for one to
   // happen (more third-party ad and tracker weight, slower networks).
   window.addEventListener('load', fixBreakoutOffset);
+
+  // Coming back to the post with the back button is the case neither of
+  // those covers. A page restored from the back/forward cache fires neither
+  // load nor DOMContentLoaded -- it is resumed, not rebuilt -- so nothing
+  // above would run again, while the scroll position IS restored, which is
+  // exactly the state the measurement depends on. pageshow fires either way,
+  // on a fresh load and on a restore, and both handlers are cheap and
+  // idempotent.
+  window.addEventListener('pageshow', function(){
+    fixBreakoutOffset();
+    onScroll();
+  });
   }
 
   if (document.readyState === 'loading'){
